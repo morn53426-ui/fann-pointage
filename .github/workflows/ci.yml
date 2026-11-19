@@ -26,6 +26,8 @@ jobs:
         run: npm run typecheck
       - name: Vérifier les tests
         run: npm test
+      - name: Tester le chiffrement et l’intégrité des sauvegardes
+        run: npm run test:backup
       - name: Vérifier les scripts navigateur
         run: |
           node --check web/app.js
