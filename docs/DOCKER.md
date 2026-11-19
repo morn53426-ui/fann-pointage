@@ -12,7 +12,7 @@ Le registre inclut les 20 services et 54 fiches agents de référence. Les route
 
 La gestion des fiches agents et des badges est limitée à l’administrateur côté serveur. L’émission/révocation/renouvellement des badges est auditée ; retirer un badge ne désactive pas l’agent. Le rôle SQL `fann_app` n’est pas superutilisateur et ne possède pas de droits DDL.
 
-**Préproduction — version 0.2.0-preproduction.47 :** les contrôles CI de la révision `0533a6c` sont réussis (TypeScript, tests Node, sauvegardes, PostgreSQL jetable et Playwright). Les migrations du catalogue vont jusqu’à `0027_indexes_performance_operational` ; le script vérifie aussi l’ENUM Mobil `0017`. Cela ne remplace pas la recette d’un clone de la base du site, ni les essais HTTPS, GPS, caméra et impression sur les appareils réels. Ne considérez pas cette version comme un registre officiel de présence avant validation des contrôles de `docs/PREPARATION_PRODUCTION.md`.
+**Préproduction — version 0.2.0-preproduction.47 :** les contrôles CI de la révision `04546766` sont réussis (TypeScript, tests Node, sauvegardes, PostgreSQL jetable et Playwright). Les migrations du catalogue vont jusqu’à `0027_indexes_performance_operational` ; le script vérifie aussi l’ENUM Mobil `0017`. Cela ne remplace pas la recette d’un clone de la base du site, ni les essais HTTPS, GPS, caméra et impression sur les appareils réels. Ne considérez pas cette version comme un registre officiel de présence avant validation des contrôles de `docs/PREPARATION_PRODUCTION.md`.
 
 ## Configuration
 
