@@ -8,7 +8,7 @@ Le mode `postgres-catalogue` utilise PostgreSQL pour le registre des agents et s
 
 Le tableau de bord dispose d’indicateurs issus de PostgreSQL, d’un état de connexion explicite, d’un aperçu sur 7 jours, des compteurs par régime et d’une présentation adaptative desktop/mobile. La création, l’émission, le renouvellement et la révocation des badges ainsi que la modification des données agents sont réservés à l’administrateur côté serveur. Révoquer un badge ne désactive pas l’agent ; les pointages historiques ne sont pas supprimés.
 
-Le registre d’origine représente **54 références d’agents et 20 services** proviennent des éléments fournis pour l’import initial ; le fichier nominatif est conservé hors du dépôt. Les matricules absents de la liste restent vides ; les régimes importés doivent être confirmés par l’administration avant la création des plannings.
+Les éléments de référence fournis pour l'import initial représentent **54 fiches agents et 20 services**. Le fichier nominatif SQL reste hors du dépôt et n'est jamais intégré à l'image Docker ni appliqué par les migrations ordinaires. Son import, s'il est autorisé, nécessite la prévisualisation et l'approbation décrites dans `docs/IMPORT_REGISTRE.md`. Les matricules absents de la liste restent vides ; les régimes importés doivent être confirmés par l’administration avant la création des plannings.
 
 ## Limites restantes — préproduction uniquement
 
