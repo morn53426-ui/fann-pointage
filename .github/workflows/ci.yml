@@ -35,6 +35,8 @@ jobs:
           node --check web/vendor/qrcode.js
       - name: Tests sur un vrai PostgreSQL jetable (migrations, QR, concurrence)
         run: npm run test:postgres
+      - name: Restauration intégrale d’une archive chiffrée sur PostgreSQL tmpfs
+        run: npm run test:backup-restore
       - name: Installer Chromium pour Playwright
         run: npx playwright install --with-deps chromium
       - name: Tests navigateur (Playwright)
