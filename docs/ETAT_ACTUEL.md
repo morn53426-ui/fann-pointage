@@ -1,4 +1,4 @@
-# État actuel du projet — FANN POINTAGE
+# État actuel du projet — point d'entrée unique FANN POINTAGE
 Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 
 > Ce fichier est le point d'entrée de l'état courant. Les audits et rapports de `docs/historique/` restent des instantanés historiques et ne décrivent pas nécessairement la version actuelle.
