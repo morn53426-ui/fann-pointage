@@ -4,7 +4,7 @@ Mise à jour : 19 novembre 2026
 Version source : `0.2.0-preproduction.47`  
 Révision de référence contrôlée : `600dfcb19217211747d656f326a0cdec6432d6f5` sur `fix/p0-backup-restore-security`.
 
-**Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
+**Statut : préproduction.** La PR #1 (socle sécurité/sauvegarde) a été fusionnée dans `main`. Les corrections complémentaires des PR #2 à #4 sont regroupées sur `integration/preproduction-hardening` ; la CI combinée et la revue de cette branche restent à terminer avant une nouvelle fusion. Les runs #79, #91 et #97 sont des preuves séparées, pas une CI unique de la consolidation. La sortie de préproduction exige encore une restauration/migration sur un clone VPS isolé, les tests HTTPS/caméra/GPS/impression sur site et la validation métier du CHNU Fann. Aucun déploiement VPS n'est déclaré.
 
 ## 1. Contrôles automatisés réussis
 
