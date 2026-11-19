@@ -127,7 +127,6 @@ test("banc PostgreSQL : environnement jetable, concurrence QR et reprise", () =>
   assert.match(composeTest, /fann_pointage_test/);
   assert.doesNotMatch(composeTest, /^\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
   assert.match(composeTest, /tmpfs:[\s\S]*\/var\/lib\/postgresql\/data/);
-  assert.doesNotMatch(composeTest, /^\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
   assert.doesNotMatch(composeTest, /postgres_test_data/);
   assert.match(runner, /001_contraintes\.sql/);
   assert.match(runner, /garantirBaseTest/);
