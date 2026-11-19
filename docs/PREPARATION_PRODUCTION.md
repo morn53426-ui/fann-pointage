@@ -2,7 +2,7 @@
 
 Mise à jour : 19 novembre 2026  
 Version source : `0.2.0-preproduction.47`  
-Révision contrôlée : `0533a6cbb01f95450b2c6c6fa797f538f413ec38` sur `fix/p0-backup-restore-security`.
+Révision contrôlée : `04546766b5c434c812a15779bf2736cf07dab59e` sur `fix/p0-backup-restore-security`.
 
 **Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
 
@@ -22,7 +22,7 @@ La CI GitHub de la révision ci-dessus a terminé avec succès les étapes suiva
 | Tests d'intégration sur PostgreSQL jetable (migrations, QR, concurrence) | Réussi |
 | Tests E2E Playwright sur Chromium | Réussi |
 
-Exécution de référence : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44587429471).
+Exécution de référence : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343).
 
 Ces résultats ne sont pas une preuve de fonctionnement sur le VPS réel. Ils n'attestent pas non plus le fonctionnement de la caméra, du GPS, du HTTPS avec le DNS définitif ou de l'impression sur les appareils du site.
 
