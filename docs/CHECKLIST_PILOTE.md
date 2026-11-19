@@ -1,6 +1,6 @@
 # Check-list du pilote (1 à 2 services, 1 à 2 semaines) — à imprimer
 
-Version cible : `0.2.0-preproduction.47` — utilisez une révision validée de la branche de correction, avec une CI entièrement verte. Cette check-list ne vaut pas autorisation de déploiement : le CHNU Fann doit approuver le pilote.
+Version cible : `0.2.0-preproduction.47` — branche de consolidation `integration/preproduction-hardening`, proposée par la PR #5 vers `main`. N'utilisez cette révision que lorsque la CI combinée du commit exact est entièrement verte et que la PR a été relue/approuvée. Cette check-list ne vaut pas autorisation de déploiement : le CHNU Fann doit approuver le pilote.
 
 Service pilote : ____________________  Responsable : ____________________  Début : ___ / ___ / 2026
 
