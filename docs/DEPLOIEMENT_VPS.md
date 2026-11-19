@@ -79,13 +79,13 @@ export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
 bash scripts/vps/restaurer-sauvegarde-chiffree.sh sauvegardes/chiffrees/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-Le mode `test` n'arrête pas l'application et ne remplace pas la base courante. Pour une répétition complète de restauration/migration, utilisez un VPS de recette isolé avec ses propres volumes et son propre `.env), puis lancez le mode `production) **uniquement sur ce clone** :
+Le mode `test` n'arrête pas l'application et ne remplace pas la base courante. Pour une répétition complète de restauration/migration, utilisez un VPS de recette isolé avec ses propres volumes et son propre `.env`, puis lancez le mode `production` **uniquement sur ce clone** :
 
 ```bash
 bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc production
 ```
 
-Ce mode demande de taper `RESTAURER), arrête l'application sélectionnée par Compose, restaure le dump, exécute les migrations puis redémarre l'application. Il remplace la base sélectionnée : ne le lancez sur le VPS réel que pour un incident confirmé, après validation du clone et décision explicite.
+Ce mode demande de taper `RESTAURER`, arrête l'application sélectionnée par Compose, restaure le dump, exécute les migrations puis redémarre l'application. Il remplace la base sélectionnée : ne le lancez sur le VPS réel que pour un incident confirmé, après validation du clone et décision explicite.
 
 Le script exige la clé `~/.fann-backup.key` (ou `BACKUP_KEY_FILE`) et vérifie le HMAC V2 avant déchiffrement. Les archives historiques sans HMAC sont refusées par défaut ; `ALLOW_LEGACY_BACKUP=1` est une dérogation exceptionnelle qui ne garantit pas l'intégrité cryptographique.
 
