@@ -1,105 +1,147 @@
 # Préparation à la production — FANN POINTAGE
 
-Version source : `0.2.0-preproduction.25` (messagerie générale/ciblée, suivi de lecture, export JSON expurgé et contrôle renforcé de restauration ; la qualification reste à effectuer). Ce document sépare **ce qui a été vérifié et reproduit** de **ce qui doit encore être validé sur le site**. Tant que la section 5 n'est pas entièrement cochée, la version reste en préproduction.
+Mise à jour : 19 novembre 2026  
+Version source : `0.2.0-preproduction.47`  
+Révision contrôlée : `0533a6cbb01f95450b2c6c6fa797f538f413ec38` sur `fix/p0-backup-restore-security`.
 
-## 1. Ce qui a été reproduit (résultats réels)
+**Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main) ni aucun déploiement VPS n'est déclaré.
 
-| Contrôle | Résultat | Comment le rejouer |
-|---|---|---|
-| Version Node requise | Le projet exige Node.js >=22.23.4. L’environnement de modification utilise 22.16.0 : version insuffisante pour une qualification de livraison. | `node --version`, puis installer Node 22.23.4+ |
-| `npm ci` / dépendances officielles | Non validé dans cet environnement : les dépendances officielles/versions complètes ne sont pas installées ici. | `npm ci` sous Node 22.23.4+ |
-| `npm test` — suite complète après le lot Mobil | **381 tests réussis, 0 échec** | `npm test` |
-| `npm run typecheck` | Non qualifié : `node_modules` absent et `npm ci` non abouti dans cet environnement. | `npm ci` puis `npm run typecheck` sous Node 22.23.4+ |
-| Syntaxe JavaScript | `node --check web/app.js` et `node --check scripts/migrate-catalogue.mjs` réussis | commandes `node --check` ci-dessus |
-| Migrations PostgreSQL 0017/0018/0021/0022 | Tests statiques réussis ; la migration 0021 n’est pas appliquée sur une vraie base PostgreSQL dans cet environnement. | Appliquer sur une copie de recette, puis `npm run db:upgrade` deux fois |
-| `npm run test:postgres` | Non exécuté : Docker est absent de cet environnement. | Démarrer Docker Desktop, puis `npm run test:postgres` |
-| `npm run test:e2e` | Non exécuté : le runner Playwright Test requis n’est pas disponible dans cet environnement. | Après `npm ci` : `npm run test:e2e` |
-| Build applicatif | Aucun script `build` n’est défini dans `package.json`. | `docker compose build` dans un environnement Docker fonctionnel |
-| `npm run check:delivery` | OK, aucun chemin privé ni motif de secret détecté | `npm run check:delivery` |
+## 1. Contrôles automatisés réussis
 
-Limites de cette vérification : aucun serveur PostgreSQL/Docker n’était disponible pendant ce lot ; les dépendances npm complètes, les tests Playwright, les appareils réels, la caméra, la géolocalisation, le HTTPS Caddy et l’imprimante restent à valider. Ils figurent dans la section 5.
+La CI GitHub de la révision ci-dessus a terminé avec succès les étapes suivantes :
 
-La version inclut maintenant le ciblage des messages (`tous`, comptes sélectionnés ou services) avec filtrage serveur et priorité normale/urgente. La migration `0022_messagerie_destinataires` est requise ; les tests automatisés ne remplacent pas le contrôle du schéma sur une vraie base.
+| Contrôle | Résultat |
+|---|---|
+| Installation des dépendances | Réussi |
+| Audit des dépendances de production | Réussi |
+| Contrôle de livraison / absence de fichiers privés et secrets livrables | Réussi |
+| TypeScript | Réussi |
+| Tests Node | Réussi |
+| Tests de chiffrement et d'intégrité des sauvegardes | Réussi |
+| Vérification des scripts navigateur | Réussi |
+| Tests d'intégration sur PostgreSQL jetable (migrations, QR, concurrence) | Réussi |
+| Tests E2E Playwright sur Chromium | Réussi |
 
-## 2. Contrôle des routes « non raccordées » (503 `migration_metier_incomplete`)
+Exécution de référence : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44587429471).
 
-En mode PostgreSQL, toute route non raccordée répond **503** plutôt que de basculer sur les données de démonstration (refus volontaire). Le test `src/api/couverture-routes-postgres.test.ts` extrait **tous** les chemins `/api/…` appelés par `web/app.js` et vérifie qu'aucun ne tombe sur ce 503. Les tests de code couvrent aussi la messagerie générale, les droits administrateur et l’export JSON ; la migrations 0021/0022 et les nouvelles routes de messagerie ciblée restent à intégrer à la recette PostgreSQL réelle de cette livraison.
-Si vous ajoutez un écran, ajoutez sa route à la liste blanche de `routes.ts` : le test échouera sinon.
+Ces résultats ne sont pas une preuve de fonctionnement sur le VPS réel. Ils n'attestent pas non plus le fonctionnement de la caméra, du GPS, du HTTPS avec le DNS définitif ou de l'impression sur les appareils du site.
 
-## 3. Recette PostgreSQL (à refaire sur le poste de déploiement)
+## 2. État du schéma PostgreSQL
+
+Le script `scripts/migrate-catalogue.mjs` applique de façon idempotente les migrations catalogue `0013` à `0027), en vérifiant l'ENUM Mobil `0017` séparément entre `0016) et `0018).
+
+La dernière migration présente est `0027_indexes_performance_operational`. Le service Compose `migrate` lance le script de migration et configure les droits du rôle runtime `fann_app` avant que le service `app` ne démarre.
+
+Pour une base existante :
+- les scripts d'initialisation de l'image PostgreSQL ne sont pas rejoués sur le volume existant ;
+- le service `migrate` applique les versions manquantes et les droits runtime ;
+- ne jamais supprimer le volume PostgreSQL pour « relancer » les migrations ;
+- le test doit être effectué sur un clone, jamais sur la base active.
+
+Le point d'entrée de santé `/readyz` vérifie PostgreSQL et les marqueurs de migrations opérationnelles requis, jusqu'à `0027), ainsi que la présence du régime Mobil dans l'ENUM.
+
+## 3. Recette sur un clone — procédure obligatoire
+
+### 3.1 Isoler l'environnement
+
+Utilisez un VPS de recette ou un hôte Docker distinct, avec ses propres volumes PostgreSQL/runtime et son propre fichier `.env). Vérifiez avant de poursuivre :
+- le nom du projet Compose, les ports publiés et les volumes sont distincts de la production ;
+- le DNS ou le domaine de recette ne pointe pas vers le serveur public de production ;
+- aucune commande Docker de recette ne cible le daemon/hôte de production ;
+- la clé de sauvegarde est transférée séparément, via un canal sécurisé, et n'est pas stockée avec l'archive.
+
+Ne réalisez pas cette étape sur le VPS de production en changeant simplement le nom de l'environnement dans le terminal.
+
+### 3.2 Vérifier l'archive chiffrée et la restauration isolée
+
+Sur l'environnement de recette uniquement :
 
 ```bash
-# 1) Base neuve : docker compose up -d db puis
-npm run migrate:catalogue && npm run db:configure-app-role
-# 2) Copie représentative d'une base existante (jamais la base de production elle-même) :
-#    restaurer une sauvegarde dans une base jetable, puis
-npm run db:upgrade && npm run db:upgrade     # le 2e passage ne doit rien appliquer
-# 3) Tests d'intégration jetables (Docker requis)
-npm run test:postgres
-# 4) Droits minimaux : toutes ces commandes doivent ÉCHOUER avec le compte fann_app
-psql "$DATABASE_URL" -c "DROP TABLE agents" -c "CREATE TABLE x(i int)" \
-  -c "DELETE FROM journal_audit" -c "TRUNCATE pointages"
+export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
+
+# L'archive doit être copiée dans un emplacement privé de la recette.
+# La clé est par défaut ~/.fann-backup.key ; sinon définir BACKUP_KEY_FILE.
+bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-## 4. Recette fonctionnelle de bout en bout
+Le mode `test) :
+- vérifie le HMAC de l'archive V2 avant de transmettre le ciphertext au déchiffreur ;
+- déchiffre puis vérifie la structure et les types des fichiers de l'archive ;
+- restaure le dump dans une base temporaire dédiée ;
+- contrôle que les principales tables sont lisibles et que des agents/services sont présents ;
+- supprime automatiquement la base temporaire.
 
-À lancer **uniquement sur une base de recette** (le script crée des agents, comptes et pointages de test) :
+Ce test prouve que l'archive peut être déchiffrée et restaurée dans un contexte isolé. Il ne met pas à niveau une copie persistante.
+
+### 3.3 Répéter une mise à niveau sur la copie persistante
+
+Pour tester la compatibilité d'une sauvegarde antérieure avec la version courante, restaurez-la dans la base du clone isolé. Le mode `production` du script est ici utilisé **uniquement à l'intérieur du clone de recette** : il remplace la base configurée dans le fichier `.env) de cette recette, arrête l'application de recette, restaure, lance `migrate), puis redémarre l'application de recette. Il demande de taper `RESTAURER).
 
 ```bash
-FANN_RECETTE_OK=1 ADMIN_INITIAL_MOT_DE_PASSE='…' FANN_URL=http://127.0.0.1:8787 npm run recette:api
+# À exécuter uniquement depuis le répertoire du clone de recette.
+export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
+bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc production
 ```
 
-Couvre : connexion/échec, catalogue, matricule en double, badge, zone, QR dynamique, plannings, pointage poste partagé (idempotence, double pointage refusé, badge falsifié refusé, délai minimal de 2 min), écrans, comptes administrateur/responsable/brancardier, accès hors périmètre (403), désactivation de compte et session révoquée, déconnexion, verrouillage après échecs (429) et déblocage. Il attend ~2 min 05 s entre arrivée et départ (règle métier). Après la recette : redémarrez l'application et vérifiez que les données sont toujours là, puis **supprimez la base de recette**.
+N'exécutez jamais cette commande sur la base de production pour une répétition. Le mode `production` remplace la base sélectionnée par Compose.
 
-## 5. Reste à valider sur le site avant la production (non vérifiable ici)
+L'archive contient aussi `env.sauvegarde). Pour l'extraire à part (jamais directement dans le dépôt), utilisez une destination privée qui n'existe pas encore :
 
-- [ ] `docker compose up` complet (services `db`, `migrate`, `app`) sur le poste de déploiement ; `docker compose ps` tous sains.
-- [ ] `npm ci` puis `npm run typecheck`, `npm run test:security` et `npm audit --omit=dev` dans une CI connectée sous Node 22.23.4+.
-- [ ] `docker compose build` puis `docker compose up -d`; services `db`, `migrate`, `app` sains.
-- [ ] `npm run test:postgres` (banc Docker jetable) vert après ajout des migrations 0017/0018/0021/0022.
-- [ ] Vérifier en base réelle le ciblage : agent destinataire voit le message, autre agent le voit pas, ancien affecté ne voit plus les messages ciblés service, et seul l’admin accède à l’annuaire.
-- [ ] Exécuter `bash scripts/restaurer-sauvegarde.sh sauvegardes/nom-de-votre-dump.dump test` sur un dump restauré depuis la destination distante et conserver son journal.
-- [ ] Vérifier sur copie de recette le passage du service Mobile de `garde` à `mobil` pour les seules affectations ouvertes, sans altérer les affectations clôturées ni les plannings historiques.
-- [ ] Vérifier les cas Mobil : 08–16 du lundi au vendredi, exclusion des jours fériés par défaut, garde 16–08 les jours ouvrés non fériés, garde 08–08 (24 h) si le début tombe un samedi, un dimanche ou un jour férié, repos minimal de 56 h après chaque garde, chevauchements refusés et contrôle backend inter-régimes.
-- [ ] Navigateurs mobile **et** desktop : connexion, pointage QR, poste partagé, badges, plannings, rapports. *(Chromium headless : 32 tests verts ; reste à faire sur de vrais téléphones et sur Safari/Firefox si utilisés.)*
-- [ ] Mode hors ligne du poste partagé et resynchronisation.
-- [ ] Caméra et géolocalisation **en HTTPS** sur les téléphones réels.
-- [ ] Impression : badge et feuilles d'émargement sur l'imprimante réelle (page `/imprimer.html`).
-- [ ] `FANN_ENV=production` défini dans `.env` et `FANN_MDP_PROVISOIRE` absent ou `aleatoire` (le mode « telephone » est refusé au démarrage en production).
-- [ ] Affiches QR : générées depuis l’adresse définitive (https), jamais en mode TEST ; correspondance service-zone-coordonnées validée par le CHNU Fann ; procédure de révocation (désactivation de zone) testée.
-- [ ] Certificat HTTPS : nom DNS interne, autorité Caddy installée sur chaque poste/téléphone (voir `docs/HTTPS_ET_SAUVEGARDES.md`).
-- [ ] Zone de pointage : coordonnées GPS validées du site saisies par l'administrateur.
-- [ ] Régimes et plannings validés avec l’administration du CHNU Fann, notamment les règles Mobil (garde 24 h les week-ends/jours fériés et repos minimal de 56 h).
-- [ ] Sauvegarde chiffrée planifiée **et** restauration testée sur le serveur (section 6).
-- [ ] Pilote contrôlé (un service, quelques jours) avant déploiement général.
+```bash
+BACKUP_ENV_OUTPUT=/chemin-prive/recuperation/.env.sauvegarde \
+  bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc test
+```
+
+Ce fichier contient des secrets. Ne l'affichez pas dans les journaux et ne remplacez pas aveuglément le `.env) du clone : gardez les paramètres d'isolation (identifiants PostgreSQL, ports, domaine) propres à la recette. Pour tester la validité de badges déjà imprimés, la valeur `BADGE_SECRET` historique doit être reportée de manière sécurisée dans le `.env) du clone ; les autres paramètres d'infrastructure doivent rester ceux du clone.
+
+Après la restauration persistante :
+1. vérifier `docker compose ps -a), les journaux de `migrate) et `app) et la réponse HTTP de `/readyz) ;
+2. consulter les versions dans `app_schema_migrations) et confirmer que `0027_indexes_performance_operational` est présente ;
+3. relancer une seconde fois le service `migrate) ou `npm run db:upgrade) sur la base de recette et confirmer qu'aucune migration manquante n'est appliquée ;
+4. contrôler les rôles SQL : `fann_app) ne doit pas pouvoir exécuter DDL ni supprimer le journal d'audit ;
+5. faire les scénarios fonctionnels décrits ci-dessous.
+
+## 4. Tests fonctionnels sur la recette
+
+Sur le clone seulement, avec un compte administrateur de recette :
+- création/modification/archivage de services et d'agents ;
+- émission, renouvellement et révocation des badges ;
+- pointage QR et poste partagé, double pointage, badge invalide et idempotence ;
+- règles Mobil, plages horaires, jours fériés et repos minimal ;
+- rôles administrateur/responsable/agent et contrôle du périmètre de service ;
+- anomalies, absences, rapports, exports et messagerie ciblée ;
+- reprise après redémarrage et persistance des données.
+
+Le script `npm run recette:api) peut compléter la recette, mais il crée des enregistrements de test et attend plus de deux minutes pour les scénarios de pointage : ne l'exécutez jamais sur la base de production.
+
+## 5. Contrôles sur site avant ouverture
+
+- [ ] Caméra et lecture QR sur les téléphones réellement utilisés.
+- [ ] Géolocalisation HTTPS avec coordonnées et rayon validés sur le site.
+- [ ] Connexion HTTPS/Caddy avec le DNS définitif et renouvellement du certificat.
+- [ ] Impression réelle des badges CR80, des recto-verso et des feuilles d'émargement.
+- [ ] Pointage hors ligne et resynchronisation sur le réseau réel.
+- [ ] Validation des horaires, régimes, jours fériés, repos et zones par l'administration du CHNU Fann.
+- [ ] Politique d'accès, conservation des données nominatives/photos/téléphones et responsabilités validées par l'établissement.
+- [ ] Supervision, alerte d'échec des sauvegardes, copie distante et accès à la clé de déchiffrement documentés.
+- [ ] Pilote d'un seul service sur une durée convenue, avec suivi et décision formelle avant ouverture générale.
 
 ## 6. Sauvegarde et restauration
 
-La preuve qu'une sauvegarde fonctionne est sa **restauration**. Le script de test utilise maintenant `pg_restore --exit-on-error --single-transaction`, restaure dans une base jetable, contrôle la lisibilité des principales tables ainsi qu’un nombre minimal de services, puis supprime la base de test automatiquement :
+Sur VPS Linux, utilisez les scripts dédiés :
+- `bash scripts/vps/sauvegarde-chiffree.sh` pour créer le dump et l'archive V2 chiffrée/authentifiée ;
+- `bash scripts/vps/restaurer-sauvegarde-chiffree.sh <archive.tar.enc> test` pour vérifier/restaurer dans une base temporaire ;
+- `bash scripts/vps/restaurer-sauvegarde-chiffree.sh <archive.tar.enc> production` uniquement pour un rétablissement réel après validation et avec confirmation explicite.
 
-```bash
-bash scripts/sauvegarde-postgres.sh                       # crée, vérifie (pg_restore --list) et conserve 14 copies
-# restauration isolée recommandée : validation des tables/compteurs, puis suppression automatique de la base de test
-bash scripts/restaurer-sauvegarde.sh sauvegardes/fann-pointage-AAAAMMJJ-HHMMSS.dump test
-# Windows avec sauvegarde chiffrée :
-# .\scripts\restaurer-sauvegarde.ps1 -Fichier sauvegardes\fann-pointage-AAAAMMJJ-HHMMSS.dump.enc
-# Le mode production exige la saisie explicite RESTAURER ; sauvegardez la base courante avant cette étape.
-```
-Les scripts shell sont lancés par `bash scripts/…` : le bit exécutable n'est pas nécessaire. `.gitattributes` force les fins de ligne LF (un CRLF casserait les scripts dans les conteneurs Linux).
+Ne déchiffrez pas ces archives V2 avec une simple commande `openssl enc` : l'en-tête HMAC doit être vérifié par `scripts/vps/backup-crypto.sh` avant le déchiffrement. La clé `~/.fann-backup.key` doit être copiée hors du VPS et conservée séparément des archives.
 
-## 7. Limiteur de connexion et proxy — risques et exploitation
+Les archives historiques sans HMAC sont refusées par défaut. `ALLOW_LEGACY_BACKUP=1) est une dérogation de récupération exceptionnelle ; l'intégrité d'une archive non authentifiée ne peut pas être garantie.
 
-**Limiteur en mémoire.** Le verrouillage des connexions (5 échecs / 15 min par compte+IP, 30 par IP) est conservé en mémoire du processus :
-- il est **remis à zéro à chaque redémarrage** de l'application (un attaquant qui peut provoquer un redémarrage récupère ses essais) ;
-- il n'est **pas partagé** entre instances : **ne lancez qu'une seule instance `app`** (pas de `replicas`, pas de `--scale`). Un test (`couverture-routes-postgres.test.ts`) refuse la configuration contraire ;
-- les mots de passe sont hachés (scrypt) et chaque échec/succès est tracé dans `journal_audit` : **supervisez** les `connexion_echec` répétés :
-  `docker compose exec -T db psql -U fann_admin -d fann_pointage -c "SELECT ip, count(*) FROM journal_audit WHERE action='connexion_echec' AND at > now() - interval '1 hour' GROUP BY ip ORDER BY 2 DESC LIMIT 50;"`
-- **Politique de mots de passe (décision de l'établissement) : administrateur : 9 caractères minimum (v21) ; mot de passe provisoire d'un agent ou d'un responsable : 6 ; mot de passe choisi par la personne : 8. Depuis la v22, les mots de passe à faible variété (ex. `000000001`) et les mots de passe courants sont refusés, et un mot de passe provisoire expire au bout de 7 jours** (`creer-admin-postgres.ts`, `routes.ts`, test `mot-de-passe-minimum.test.ts`). Compensations : hachage scrypt, verrouillage après échecs, journal des connexions à superviser (requête ci-dessus) et un seul accès réseau interne. Le mot de passe admin généré par `npm run setup:env` reste long et aléatoire : privilégiez-le ou changez-le pour un mot de passe robuste connu seulement de l'administrateur ;
-- le risque est acceptable pour **une instance sur un réseau interne**. Si l'application devait être exposée au-delà du réseau de l'hôpital ou répliquée, il faudrait un stockage partagé (table PostgreSQL ou Redis) — évolution non incluse dans cette version.
+Pour les sauvegardes Windows/PowerShell, suivez séparément `docs/SAUVEGARDE_SERVEUR.md`. Cette procédure n'est pas la même que le format V2 Linux/VPS ; son exécution réelle sur Windows doit être consignée avant validation de cette voie.
 
-**`X-Forwarded-For`.** L'application lit cet en-tête **uniquement** si `TRUST_PROXY=1`, et retient le **dernier** maillon (celui du proxy). Caddy remplace l'en-tête (`header_up X-Forwarded-For {remote_host}`). Conditions de sécurité :
-1. `TRUST_PROXY=1` **uniquement** avec `compose.https.yaml` ;
-2. `APP_BIND_ADDRESS` reste `127.0.0.1` : le port de l'application ne doit **jamais** être joignable directement depuis le réseau, sinon n'importe qui peut forger l'en-tête et contourner le limiteur ;
-3. avec `TRUST_PROXY=0` (accès direct), tous les clients passant par la passerelle Docker partagent une IP : le verrouillage d'un compte vaut alors pour tous les postes.
+## 7. Limites opérationnelles restantes
 
-**HTTPS interne (`tls internal`).** Le certificat est signé par une autorité **interne** Caddy : les navigateurs ne lui font pas confiance par défaut. Installez `root.crt` sur chaque poste/téléphone (procédure dans `docs/HTTPS_ET_SAUVEGARDES.md`), sinon la caméra et la géolocalisation seront bloquées. Pour un certificat public, utilisez un nom DNS public et remplacez `tls internal` par la configuration ACME de Caddy.
+- Le limiteur de tentatives est en mémoire : ne lancez qu'une seule instance `app) tant qu'un mécanisme partagé n'est pas mis en place.
+- Ne publiez pas directement le port applicatif ; gardez l'accès public derrière Caddy/HTTPS.
+- Les secrets de base, `SESSION_SECRET) et `BADGE_SECRET) doivent rester séparés, forts et hors du dépôt.
+- Le statut CI vert ne remplace jamais la recette restaurée sur une copie représentative et la validation des appareils réels.
