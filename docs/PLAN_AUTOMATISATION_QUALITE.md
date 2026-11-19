@@ -2,8 +2,8 @@
 
 Mise à jour : 19 novembre 2026 · Fuseau : Africa/Dakar  
 Dépôt : https://github.com/morn53426-ui/fann-pointage  
-Branche principale : `main`  
-Branche corrective de référence au démarrage de cette mise à jour : `fix/p0-backup-restore-security` — `f9b76e22e44d6b8826738e372f3057f122bdf7c4`
+Branche principale : `main` (`bafb11c7ac403eebbc00c5465eef4b509af812ca`)  
+Branche de consolidation : `integration/preproduction-hardening`, créée depuis `main` pour réunir les corrections des PR #2, #3 et #4.
 
 > Ce tableau décrit les preuves effectivement disponibles à la date indiquée. Une CI verte sur une branche de travail ne signifie ni intégration dans `main`, ni recette terrain, ni autorisation de mise en production.
 
@@ -13,22 +13,22 @@ Les seuls statuts autorisés sont : **À faire**, **En cours**, **Bloqué**, **C
 
 | Phase | Statut | Priorité | Preuve / situation vérifiable |
 |---|---|---:|---|
-| 0 — Audit initial | En cours | P1 | Références GitHub vérifiées : `main` = `b399764d`, branche corrective = `f9b76e22`, PR #1 ouverte en Draft. L'audit courant est ciblé ; l'inventaire exhaustif du code, des routes, des règles métier et des dépendances reste à compléter. |
-| 1 — Rétablissement de la CI | Corrigé | P1 | Run #79 de la PR #1, commit `f9b76e22` : installation, audit de production, contrôle livraison, TypeScript, tests Node, tests backup, PostgreSQL et Playwright terminés avec succès. [Run #79](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851). La recette de restauration intégrale ajoutée ensuite est sur la PR #3, pas encore intégrée à la PR #1. |
-| 2 — Responsive mobile / tablette / desktop | En cours | P1 | Les scénarios d'en-tête et badges couvrent désormais les largeurs 320, 360, 390, 430, 768, 1024 et 1440 px sur la branche `quality/phase2-responsive-plan`. La CI de cette branche doit encore prouver ces nouveaux cas ; formulaires, tableaux et modales restent à couvrir plus largement. |
-| 3 — Badges et impression | En cours | P1 | Les 40 tests Playwright du run #91 sont passés, incluant format CR80, QR, aperçu, recto-verso et PDF A4. Aucune impression sur imprimante physique n'a été réalisée. [Run #91](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504). |
-| 4 — Sécurité et sauvegardes | En cours | P1 | PR #2 corrige le risque de collision de nom de base temporaire ; tests nominaux et collision simulée intégrés au test backup. PR #3 vérifie sur données fictives le HMAC avant déchiffrement et la restauration via le script officiel dans PostgreSQL `tmpfs`. Aucun VPS, secret réel ni backup de production n'a été utilisé. |
+| 0 — Audit initial | En cours | P1 | Références GitHub vérifiées : `main` = `bafb11c7` (PR #1 fusionnée). Les PR #2 et #4 ont été fusionnées dans la branche corrective ; la PR #3 dans sa branche de suivi. Une consolidation indépendante est en préparation. L'audit courant est ciblé ; l'inventaire exhaustif du code, des routes, des règles métier et des dépendances reste à compléter. |
+| 1 — Rétablissement de la CI | Corrigé | P1 | Run #79 sur la tête de la PR #1 : CI standard verte. Run #91 sur la branche de suivi PR #3 : restauration intégrale chiffrée sur PostgreSQL `tmpfs`, migrations 0027 idempotentes et privilèges `fann_app` vérifiés. Run #97 sur la branche PR #4 : matrice responsive élargie et Playwright verts. [Run #79](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851) · [Run #91](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504) · [Run #97](https://github.com/morn53426-ui/fann-pointage/actions/runs/44623136749). La consolidation unique vers `main` reste à valider sur son propre run. |
+| 2 — Responsive mobile / tablette / desktop | En cours | P1 | Les scénarios d'en-tête, des écrans principaux et des badges couvrent 320, 360, 390, 430, 768, 1024 et 1440 px ; run #97 réussi. Les formulaires, tableaux, fenêtres modales et tous les parcours métiers ne sont pas encore couverts à ces dimensions. |
+| 3 — Badges et impression | En cours | P1 | Les tests Playwright du run #97 et du run #91 sont verts, incluant le format CR80, QR, aperçu, recto-verso, PDF A4 et les tailles responsive ciblées. Aucune impression sur imprimante physique n'a été réalisée. [Run #97](https://github.com/morn53426-ui/fann-pointage/actions/runs/44623136749). |
+| 4 — Sécurité et sauvegardes | En cours | P1 | Les corrections #2 empêchent la suppression d'une base préexistante en cas de collision ; les tests nominaux et collision simulée sont inclus. La recette #3 vérifie le HMAC avant déchiffrement et la restauration via le script officiel dans PostgreSQL `tmpfs`. Aucun VPS, secret réel ni backup de production n'a été utilisé. |
 | 5 — PostgreSQL et règles métier | En cours | P1 | Run #91 : banc PostgreSQL jetable réussi ; archive restaurée, 20 services et un agent fictif contrôlés ; migrations jusqu'à `0027_indexes_performance_operational` et second passage idempotent ; privilèges du rôle `fann_app` vérifiés. Une restauration d'un clone VPS isolé et la validation métier CHNU Fann restent nécessaires. |
 | 6 — Non-régression et performance | En cours | P2 | Les tests unitaires, PostgreSQL et Playwright sont verts sur les commits indiqués. Aucun test de charge représentatif ni mesure de latence/consommation CPU/RAM sur un VPS de recette n'est encore documenté. |
-| 7 — Documentation et tableau qualité | En cours | P2 | Ce fichier est créé sur la branche de suivi qualité. Les références historiques de `docs/ETAT_ACTUEL.md` et les documents opérationnels doivent encore être alignés sur les commits réellement livrés. |
+| 7 — Documentation et tableau qualité | En cours | P2 | Le tableau qualité et `docs/ETAT_ACTUEL.md` sont mis à jour sur la branche de consolidation ; les autres guides de préproduction doivent encore être passés en revue pour retirer les références aux PR fermées et refléter la version consolidée. |
 | 8 — Préproduction et livraison | Bloqué | P1 | En attente d'une restauration récente sur un clone VPS isolé, HTTPS/DNS/Caddy, tests GPS et caméra sur appareils réels, impression physique, validation des responsables CHNU Fann et revue des PR. Aucun déploiement ni merge n'est autorisé par ce plan. |
 
 ## État GitHub et dépendances entre PR
 
-- `main` reste sur le commit de référence `b399764d1eea2ea9ca487d030e21cb2bbb781c91` ; aucune modification de `main` n'a été effectuée dans ce travail.
-- PR #1 : [Sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), ouverte en Draft, cible `main`.
-- PR #2 : [Empêcher la suppression d'une base préexistante](https://github.com/morn53426-ui/fann-pointage/pull/2), ouverte en Draft, cible `fix/p0-backup-restore-security`. À la dernière comparaison, cette branche de suivi était en retard de deux commits sur la tête de PR #1 ; synchroniser avant toute intégration.
-- PR #3 : [Restauration chiffrée intégrale et migrations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/3), ouverte en Draft, empilée sur la branche de PR #2. Son run #91 est vert ; cela ne vaut pas fusion automatique.
+- `main` est au commit `bafb11c7ac403eebbc00c5465eef4b509af812ca` : la PR #1 y a été fusionnée. Aucun changement direct sur `main` n'a été effectué dans cette nouvelle phase.
+- PR #1 : [Sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), fusionnée dans `main`.
+- PR #2 : [Empêcher la suppression d'une base préexistante](https://github.com/morn53426-ui/fann-pointage/pull/2), fusionnée dans `fix/p0-backup-restore-security`, pas directement dans `main`.
+- PR #3 : [Restauration chiffrée intégrale et migrations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/3), fusionnée dans `fix/p1-restore-test-db-safety`. Son run #91 est vert, mais son code doit encore être intégré au chemin vers `main`.
 
 ## Règles de preuve
 
@@ -41,15 +41,16 @@ Les seuls statuts autorisés sont : **À faire**, **En cours**, **Bloqué**, **C
 
 ## Prochaines actions
 
-1. Faire terminer la CI de la branche `quality/phase2-responsive-plan` après l'extension de la matrice responsive.
-2. Compléter les scénarios responsive pour les formulaires, tableaux, navigation et modales.
-3. Synchroniser la branche PR #2 avec la tête actuelle de PR #1 après revue du diff, sans écraser les commits existants.
-4. Réaliser une recette de restauration sur un clone VPS isolé, avec données anonymisées/fictives, sauvegarde récente et contrôle de /readyz.
+1. Valider la CI de `integration/preproduction-hardening`, qui réunit les corrections #2, #3 et #4 au-dessus de `main`.
+2. Compléter la matrice responsive des formulaires, tableaux et modales.
+3. Faire relire puis fusionner la PR de consolidation uniquement après contrôle humain et CI verte.
+4. Restaurer une sauvegarde récente sur un clone VPS isolé, avec données anonymisées/fictives, et contrôler `/readyz`.
 5. Mesurer les performances sur une infrastructure de recette représentative.
-6. Obtenir les validations terrain et la revue humaine avant toute sortie de Draft ou fusion.
+6. Obtenir les validations terrain CHNU Fann avant toute mise en production.
 
 ## Historique des preuves récentes
 
 - PR #1, run #79, commit `f9b76e22` : CI standard verte.
 - PR #3, run #91, commit `e3b506af` : CI complète verte, y compris le test de restauration chiffrée intégrale sur PostgreSQL `tmpfs`, migrations 0027 idempotentes, privilèges runtime et 40 tests Playwright.
-- PR #2, run #63, commit `3a4956e3` : CI verte pour la correction de collision de base temporaire ; ce run précède la mise à jour de la branche PR #1 et doit être revalidé après synchronisation.
+- PR #2 : correction de collision de base temporaire fusionnée dans sa branche cible ; sera revalidée dans la CI de consolidation.
+- PR #4, run #97 : CI verte pour la matrice responsive étendue et les autres contrôles du dépôt.
