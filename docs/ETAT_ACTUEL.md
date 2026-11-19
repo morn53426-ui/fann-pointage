@@ -8,7 +8,7 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 - Branche de travail : `fix/p0-backup-restore-security`
 - Révision contrôlée : `0533a6cbb01f95450b2c6c6fa797f538f413ec38`
 - Pull Request : [#1 — sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), encore en brouillon.
-- Branche `main) : non modifiée par cette série de corrections.
+- Branche `main` : non modifiée par cette série de corrections.
 - Statut : **préproduction**. La CI est verte, mais la recette sur un clone du VPS/de la base réelle et les validations sur site restent obligatoires avant toute mise en production.
 
 ## Fonctions présentes
@@ -24,14 +24,14 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 
 ## Migrations PostgreSQL
 
-Le paquet de migration de catalogue traite les migrations `0013` à `0027). L'ajout de l'ENUM Mobil `0017` est vérifié/appliqué séparément, entre les migrations `0016` et `0018`.
+Le paquet de migration de catalogue traite les migrations `0013` à `0027`. L'ajout de l'ENUM Mobil `0017` est vérifié/appliqué séparément, entre les migrations `0016` et `0018`.
 
 Migrations opérationnelles les plus récentes :
-- `0025_anomalies_suivi) : suivi de traitement des anomalies.
-- `0026_mobil_gardes_24h_weekends_feries) : gardes Mobil de 24 h dans les cas calendaires prévus.
-- `0027_indexes_performance_operational) : index complémentaires pour les lectures historiques et les vues par service.
+- `0025_anomalies_suivi` : suivi de traitement des anomalies.
+- `0026_mobil_gardes_24h_weekends_feries` : gardes Mobil de 24 h dans les cas calendaires prévus.
+- `0027_indexes_performance_operational` : index complémentaires pour les lectures historiques et les vues par service.
 
-Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs), puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md).
+Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs`, puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md`.
 
 ## Vérifications GitHub Actions — révision 0533a6c
 
@@ -49,7 +49,7 @@ Cette validation automatisée ne signifie pas que le VPS, une base de production
 
 ## Sauvegardes et restauration
 
-Sur Linux/VPS, `scripts/vps/sauvegarde-chiffree.sh` produit un dump PostgreSQL et une copie de `.env), puis une archive chiffrée AES-256-CBC/PBKDF2 et authentifiée par HMAC-SHA256 (format V2). Le contrôle HMAC est effectué avant déchiffrement lors de la restauration. La clé par défaut est `~/.fann-backup.key` et doit être copiée séparément hors du VPS.
+Sur Linux/VPS, `scripts/vps/sauvegarde-chiffree.sh` produit un dump PostgreSQL et une copie de `.env`, puis une archive chiffrée AES-256-CBC/PBKDF2 et authentifiée par HMAC-SHA256 (format V2). Le contrôle HMAC est effectué avant déchiffrement lors de la restauration. La clé par défaut est `~/.fann-backup.key` et doit être copiée séparément hors du VPS.
 
 Pour valider une archive sans remplacer la base courante, utilisez le mode test du script dédié :
 
@@ -58,13 +58,13 @@ export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
 bash scripts/vps/restaurer-sauvegarde-chiffree.sh sauvegardes/chiffrees/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-Le mode test restaure dans une base temporaire, vérifie les principales tables et supprime automatiquement cette base. Pour une répétition complète de migration sur un clone persistant, consultez la section recette de `docs/PREPARATION_PRODUCTION.md). N'utilisez jamais le mode `production` sur le VPS réel pour un simple test.
+Le mode test restaure dans une base temporaire, vérifie les principales tables et supprime automatiquement cette base. Pour une répétition complète de migration sur un clone persistant, consultez la section recette de `docs/PREPARATION_PRODUCTION.md`. N'utilisez jamais le mode `production` sur le VPS réel pour un simple test.
 
 Les archives historiques sans HMAC sont refusées par défaut. L'option `ALLOW_LEGACY_BACKUP=1` est une dérogation exceptionnelle, à n'utiliser qu'après vérification de la provenance ; elle ne fournit pas de preuve cryptographique d'intégrité.
 
 ## Reste à valider avant toute production
 
-- [ ] Restaurer une sauvegarde récente sur un environnement de recette isolé, puis faire migrer ce clone jusqu'à `0027).
+- [ ] Restaurer une sauvegarde récente sur un environnement de recette isolé, puis faire migrer ce clone jusqu'à `0027`.
 - [ ] Vérifier que le deuxième passage de mise à niveau n'applique aucune migration supplémentaire.
 - [ ] Exécuter les scénarios métier sur le clone : comptes/rôles, agents/services, planning Mobil, QR, pointage en concurrence, anomalies, messagerie et rapports.
 - [ ] Tester HTTPS avec le vrai DNS et Caddy, puis caméra et GPS sur les téléphones utilisés sur site.
@@ -88,5 +88,5 @@ Les archives historiques sans HMAC sont refusées par défaut. L'option `ALLOW_L
 
 - La gouvernance des données personnelles (photos, adresses, téléphones), les durées de conservation et les obligations applicables au Sénégal doivent être confirmées avec la direction et les personnes compétentes.
 - Le limiteur de tentatives de connexion est en mémoire : une seule instance applicative doit être utilisée tant qu'un stockage partagé n'est pas mis en place.
-- Le serveur exécute le TypeScript avec `--experimental-strip-types). Une compilation JavaScript dédiée reste une évolution possible.
+- Le serveur exécute le TypeScript avec `--experimental-strip-types`. Une compilation JavaScript dédiée reste une évolution possible.
 - Les essais de sauvegarde/restauration PowerShell doivent être exécutés et documentés sur un poste Windows réel avant de considérer cette voie d'exploitation validée.
