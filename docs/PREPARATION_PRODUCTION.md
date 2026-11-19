@@ -4,7 +4,7 @@ Mise à jour : 19 novembre 2026
 Version source : `0.2.0-preproduction.47`  
 Révision contrôlée : `0533a6cbb01f95450b2c6c6fa797f538f413ec38` sur `fix/p0-backup-restore-security`.
 
-**Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main) ni aucun déploiement VPS n'est déclaré.
+**Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
 
 ## 1. Contrôles automatisés réussis
 
@@ -28,7 +28,7 @@ Ces résultats ne sont pas une preuve de fonctionnement sur le VPS réel. Ils n'
 
 ## 2. État du schéma PostgreSQL
 
-Le script `scripts/migrate-catalogue.mjs` applique de façon idempotente les migrations catalogue `0013` à `0027), en vérifiant l'ENUM Mobil `0017` séparément entre `0016) et `0018).
+Le script `scripts/migrate-catalogue.mjs` applique de façon idempotente les migrations catalogue `0013` à `0027`, en vérifiant l'ENUM Mobil `0017` séparément entre `0016` et `0018`.
 
 La dernière migration présente est `0027_indexes_performance_operational`. Le service Compose `migrate` lance le script de migration et configure les droits du rôle runtime `fann_app` avant que le service `app` ne démarre.
 
@@ -38,13 +38,13 @@ Pour une base existante :
 - ne jamais supprimer le volume PostgreSQL pour « relancer » les migrations ;
 - le test doit être effectué sur un clone, jamais sur la base active.
 
-Le point d'entrée de santé `/readyz` vérifie PostgreSQL et les marqueurs de migrations opérationnelles requis, jusqu'à `0027), ainsi que la présence du régime Mobil dans l'ENUM.
+Le point d'entrée de santé `/readyz` vérifie PostgreSQL et les marqueurs de migrations opérationnelles requis, jusqu'à `0027`, ainsi que la présence du régime Mobil dans l'ENUM.
 
 ## 3. Recette sur un clone — procédure obligatoire
 
 ### 3.1 Isoler l'environnement
 
-Utilisez un VPS de recette ou un hôte Docker distinct, avec ses propres volumes PostgreSQL/runtime et son propre fichier `.env). Vérifiez avant de poursuivre :
+Utilisez un VPS de recette ou un hôte Docker distinct, avec ses propres volumes PostgreSQL/runtime et son propre fichier `.env`. Vérifiez avant de poursuivre :
 - le nom du projet Compose, les ports publiés et les volumes sont distincts de la production ;
 - le DNS ou le domaine de recette ne pointe pas vers le serveur public de production ;
 - aucune commande Docker de recette ne cible le daemon/hôte de production ;
@@ -64,7 +64,7 @@ export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
 bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-Le mode `test) :
+Le mode `test` :
 - vérifie le HMAC de l'archive V2 avant de transmettre le ciphertext au déchiffreur ;
 - déchiffre puis vérifie la structure et les types des fichiers de l'archive ;
 - restaure le dump dans une base temporaire dédiée ;
@@ -75,7 +75,7 @@ Ce test prouve que l'archive peut être déchiffrée et restaurée dans un conte
 
 ### 3.3 Répéter une mise à niveau sur la copie persistante
 
-Pour tester la compatibilité d'une sauvegarde antérieure avec la version courante, restaurez-la dans la base du clone isolé. Le mode `production` du script est ici utilisé **uniquement à l'intérieur du clone de recette** : il remplace la base configurée dans le fichier `.env) de cette recette, arrête l'application de recette, restaure, lance `migrate), puis redémarre l'application de recette. Il demande de taper `RESTAURER).
+Pour tester la compatibilité d'une sauvegarde antérieure avec la version courante, restaurez-la dans la base du clone isolé. Le mode `production` du script est ici utilisé **uniquement à l'intérieur du clone de recette** : il remplace la base configurée dans le fichier `.env` de cette recette, arrête l'application de recette, restaure, lance `migrate`, puis redémarre l'application de recette. Il demande de taper `RESTAURER`.
 
 ```bash
 # À exécuter uniquement depuis le répertoire du clone de recette.
@@ -85,20 +85,20 @@ bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HH
 
 N'exécutez jamais cette commande sur la base de production pour une répétition. Le mode `production` remplace la base sélectionnée par Compose.
 
-L'archive contient aussi `env.sauvegarde). Pour l'extraire à part (jamais directement dans le dépôt), utilisez une destination privée qui n'existe pas encore :
+L'archive contient aussi `env.sauvegarde`. Pour l'extraire à part (jamais directement dans le dépôt), utilisez une destination privée qui n'existe pas encore :
 
 ```bash
 BACKUP_ENV_OUTPUT=/chemin-prive/recuperation/.env.sauvegarde \
   bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-Ce fichier contient des secrets. Ne l'affichez pas dans les journaux et ne remplacez pas aveuglément le `.env) du clone : gardez les paramètres d'isolation (identifiants PostgreSQL, ports, domaine) propres à la recette. Pour tester la validité de badges déjà imprimés, la valeur `BADGE_SECRET` historique doit être reportée de manière sécurisée dans le `.env) du clone ; les autres paramètres d'infrastructure doivent rester ceux du clone.
+Ce fichier contient des secrets. Ne l'affichez pas dans les journaux et ne remplacez pas aveuglément le `.env` du clone : gardez les paramètres d'isolation (identifiants PostgreSQL, ports, domaine) propres à la recette. Pour tester la validité de badges déjà imprimés, la valeur `BADGE_SECRET` historique doit être reportée de manière sécurisée dans le `.env` du clone ; les autres paramètres d'infrastructure doivent rester ceux du clone.
 
 Après la restauration persistante :
-1. vérifier `docker compose ps -a), les journaux de `migrate) et `app) et la réponse HTTP de `/readyz) ;
-2. consulter les versions dans `app_schema_migrations) et confirmer que `0027_indexes_performance_operational` est présente ;
-3. relancer une seconde fois le service `migrate) ou `npm run db:upgrade) sur la base de recette et confirmer qu'aucune migration manquante n'est appliquée ;
-4. contrôler les rôles SQL : `fann_app) ne doit pas pouvoir exécuter DDL ni supprimer le journal d'audit ;
+1. vérifier `docker compose ps -a`, les journaux de `migrate` et `app` et la réponse HTTP de `/readyz` ;
+2. consulter les versions dans `app_schema_migrations` et confirmer que `0027_indexes_performance_operational` est présente ;
+3. relancer une seconde fois le service `migrate` ou `npm run db:upgrade` sur la base de recette et confirmer qu'aucune migration manquante n'est appliquée ;
+4. contrôler les rôles SQL : `fann_app` ne doit pas pouvoir exécuter DDL ni supprimer le journal d'audit ;
 5. faire les scénarios fonctionnels décrits ci-dessous.
 
 ## 4. Tests fonctionnels sur la recette
@@ -112,7 +112,7 @@ Sur le clone seulement, avec un compte administrateur de recette :
 - anomalies, absences, rapports, exports et messagerie ciblée ;
 - reprise après redémarrage et persistance des données.
 
-Le script `npm run recette:api) peut compléter la recette, mais il crée des enregistrements de test et attend plus de deux minutes pour les scénarios de pointage : ne l'exécutez jamais sur la base de production.
+Le script `npm run recette:api` peut compléter la recette, mais il crée des enregistrements de test et attend plus de deux minutes pour les scénarios de pointage : ne l'exécutez jamais sur la base de production.
 
 ## 5. Contrôles sur site avant ouverture
 
@@ -135,13 +135,13 @@ Sur VPS Linux, utilisez les scripts dédiés :
 
 Ne déchiffrez pas ces archives V2 avec une simple commande `openssl enc` : l'en-tête HMAC doit être vérifié par `scripts/vps/backup-crypto.sh` avant le déchiffrement. La clé `~/.fann-backup.key` doit être copiée hors du VPS et conservée séparément des archives.
 
-Les archives historiques sans HMAC sont refusées par défaut. `ALLOW_LEGACY_BACKUP=1) est une dérogation de récupération exceptionnelle ; l'intégrité d'une archive non authentifiée ne peut pas être garantie.
+Les archives historiques sans HMAC sont refusées par défaut. `ALLOW_LEGACY_BACKUP=1` est une dérogation de récupération exceptionnelle ; l'intégrité d'une archive non authentifiée ne peut pas être garantie.
 
 Pour les sauvegardes Windows/PowerShell, suivez séparément `docs/SAUVEGARDE_SERVEUR.md`. Cette procédure n'est pas la même que le format V2 Linux/VPS ; son exécution réelle sur Windows doit être consignée avant validation de cette voie.
 
 ## 7. Limites opérationnelles restantes
 
-- Le limiteur de tentatives est en mémoire : ne lancez qu'une seule instance `app) tant qu'un mécanisme partagé n'est pas mis en place.
+- Le limiteur de tentatives est en mémoire : ne lancez qu'une seule instance `app` tant qu'un mécanisme partagé n'est pas mis en place.
 - Ne publiez pas directement le port applicatif ; gardez l'accès public derrière Caddy/HTTPS.
-- Les secrets de base, `SESSION_SECRET) et `BADGE_SECRET) doivent rester séparés, forts et hors du dépôt.
+- Les secrets de base, `SESSION_SECRET` et `BADGE_SECRET` doivent rester séparés, forts et hors du dépôt.
 - Le statut CI vert ne remplace jamais la recette restaurée sur une copie représentative et la validation des appareils réels.
