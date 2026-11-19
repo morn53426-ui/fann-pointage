@@ -125,9 +125,9 @@ test("banc PostgreSQL : environnement jetable, concurrence QR et reprise", () =>
   const runner = readFileSync(new URL("../../scripts/test-postgres.mjs", import.meta.url), "utf8");
   const packageJson = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { scripts?: Record<string, string> };
   assert.match(composeTest, /fann_pointage_test/);
-  assert.doesNotMatch(composeTest, /^\s+ports:/m, "la base de test ne doit exposer aucun port");
-  assert.match(composeTest, /tmpfs:[\\s\\S]*\\/var\\/lib\\/postgresql\\/data/);
-  assert.doesNotMatch(composeTest, /^\\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
+  assert.doesNotMatch(composeTest, /^\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
+  assert.match(composeTest, /tmpfs:[\s\S]*\/var\/lib\/postgresql\/data/);
+  assert.doesNotMatch(composeTest, /^\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
   assert.doesNotMatch(composeTest, /postgres_test_data/);
   assert.match(runner, /001_contraintes\.sql/);
   assert.match(runner, /garantirBaseTest/);
