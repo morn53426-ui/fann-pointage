@@ -22,7 +22,7 @@ docker compose exec -T db pg_restore --list < "$dump" > /dev/null
 case "$mode" in
   test)
     # A random suffix prevents predictable collisions; createdb must never delete an existing database.
-    random_suffix="$(od -An -N12 -tx1 /dev/urandom | tr -d ' \\n')"
+    random_suffix="$(od -An -N12 -tx1 /dev/urandom | tr -d '[:space:]')"
     [[ "$random_suffix" =~ ^[0-9a-f]{24}$ ]] || { echo "Impossible de générer un identifiant temporaire sûr." >&2; exit 1; }
     testdb="fann_restore_test_$random_suffix"
     testdb_created=0
