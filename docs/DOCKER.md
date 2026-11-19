@@ -12,7 +12,7 @@ Le catalogue comprend 20 services de référence. Les éléments de référence 
 
 La gestion des fiches agents et des badges est limitée à l’administrateur côté serveur. L’émission/révocation/renouvellement des badges est auditée ; retirer un badge ne désactive pas l’agent. Le rôle SQL `fann_app` n’est pas superutilisateur et ne possède pas de droits DDL.
 
-**Préproduction — version 0.2.0-preproduction.47 :** les contrôles CI de la révision `04546766` sont réussis (TypeScript, tests Node, sauvegardes, PostgreSQL jetable et Playwright). Les migrations du catalogue vont jusqu’à `0027_indexes_performance_operational` ; le script vérifie aussi l’ENUM Mobil `0017`. Cela ne remplace pas la recette d’un clone de la base du site, ni les essais HTTPS, GPS, caméra et impression sur les appareils réels. Ne considérez pas cette version comme un registre officiel de présence avant validation des contrôles de `docs/PREPARATION_PRODUCTION.md`.
+**Préproduction — version 0.2.0-preproduction.47 :** la PR #1 (socle sauvegardes/sécurité) est fusionnée dans `main`. Les corrections additionnelles de restauration et de responsive sont regroupées sur `integration/preproduction-hardening` et la PR #5 ; la CI combinée doit être verte avant revue/merge. Les tests de restauration CI utilisent PostgreSQL isolé en `tmpfs` (aucun volume Docker persistant), sans supprimer de volume. Les migrations du catalogue vont jusqu’à `0027_indexes_performance_operational` ; le script vérifie aussi l’ENUM Mobil `0017`. Cela ne remplace pas la recette d’un clone de la base du site, ni les essais HTTPS, GPS, caméra et impression sur les appareils réels. Ne considérez pas cette version comme un registre officiel de présence avant validation des contrôles de `docs/PREPARATION_PRODUCTION.md`.
 
 ## Configuration
 
@@ -80,7 +80,7 @@ Ne faites pas `docker compose down -v` pour « relancer » une migration : cela 
 
 ## Essais PostgreSQL sur base jetable
 
-`npm run test:postgres` est réservé aux tests isolés et peut créer/supprimer un conteneur et un volume de test. Ne lancez jamais ces tests sur la base contenant les 54 fiches réelles. Les tests unitaires utilisent également des clients SQL simulés ; seuls les essais sur la vraie base valident l’intégration complète.
+`npm run test:postgres` est réservé aux tests isolés : il construit un conteneur de test dont `PGDATA` est monté en `tmpfs`, sans volume Docker persistant ; son nettoyage retire uniquement le conteneur et l’image de test. Ne lancez jamais ces tests sur la base contenant les 54 fiches réelles. Les tests unitaires utilisent également des clients SQL simulés ; seuls les essais sur la vraie base valident l’intégration complète.
 
 
 ## Mise à jour applicative (migrations 0021–0027)
