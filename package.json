@@ -35,7 +35,8 @@
     "audit:prod": "npm audit --omit=dev --registry=https://registry.npmjs.org",
     "health": "node scripts/verifier-sante.mjs",
     "planning:urgences": "node --experimental-strip-types src/regimes/urgences/planning-cli.ts",
-    "test:backup": "node --test scripts/vps/backup-crypto.test.mjs scripts/restaurer-sauvegarde.test.mjs"
+    "test:backup": "node --test scripts/vps/backup-crypto.test.mjs scripts/restaurer-sauvegarde.test.mjs",
+    "test:backup-restore": "node scripts/test-backup-restore.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
