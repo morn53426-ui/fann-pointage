@@ -2,7 +2,7 @@
 
 Mise à jour : 19 novembre 2026  
 Version source : `0.2.0-preproduction.47`  
-Révision de référence contrôlée : `bea74bb6d3bb1770e2c7a8bc5b35f0f85ed8e310` sur `fix/p0-backup-restore-security`.
+Révision de référence contrôlée : `600dfcb19217211747d656f326a0cdec6432d6f5` sur `fix/p0-backup-restore-security`.
 
 **Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
 
@@ -22,7 +22,7 @@ La CI GitHub de la révision ci-dessus a terminé avec succès les étapes suiva
 | Tests d'intégration sur PostgreSQL jetable (migrations, QR, concurrence) | Réussi |
 | Tests E2E Playwright sur Chromium | Réussi |
 
-Exécution de référence sur la révision `bea74bb6` : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44608646615).
+Exécution de référence sur la révision `600dfcb1` : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44618140753).
 
 Ces résultats ne sont pas une preuve de fonctionnement sur le VPS réel. Ils n'attestent pas non plus le fonctionnement de la caméra, du GPS, du HTTPS avec le DNS définitif ou de l'impression sur les appareils du site.
 
@@ -69,10 +69,15 @@ Ne réalisez pas cette étape sur le VPS de production en changeant simplement l
 
 ### 3.2 Vérifier l'archive chiffrée et la restauration isolée
 
-Sur l'environnement de recette uniquement :
+Sur l'environnement de recette uniquement, avec le fichier local `compose.recette.yaml` décrit en 3.1 :
 
 ```bash
-export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
+# Conserver impérativement la surcouche de recette, pas compose.vps.yaml.
+export COMPOSE_FILE="compose.yaml:compose.recette.yaml"
+
+# Démarrer seulement PostgreSQL sur le volume isolé de recette.
+docker compose up -d db
+docker compose ps db
 
 # L'archive doit être copiée dans un emplacement privé de la recette.
 # La clé est par défaut ~/.fann-backup.key ; sinon définir BACKUP_KEY_FILE.
@@ -94,7 +99,8 @@ Pour tester la compatibilité d'une sauvegarde antérieure avec la version coura
 
 ```bash
 # À exécuter uniquement depuis le répertoire du clone de recette.
-export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
+# Ne pas remplacer cette valeur par compose.vps.yaml.
+export COMPOSE_FILE="compose.yaml:compose.recette.yaml"
 bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc production
 ```
 
