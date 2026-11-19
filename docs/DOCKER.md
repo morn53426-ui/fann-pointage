@@ -2,10 +2,11 @@
 
 ## Mode fourni par cette version
 
-Compose démarre deux services :
+Compose démarre trois services :
 
 - `db` : PostgreSQL avec volume persistant `fann-pointage-postgres-data` ;
-- `app` : l’application Node.js, en mode `FANN_MODE=postgres-catalogue` par défaut.
+- `migrate` : tâche ponctuelle qui applique les migrations manquantes et configure les droits du rôle runtime ;
+- `app` : l’application Node.js, en mode `FANN_MODE=postgres-catalogue` par défaut. Elle attend que `db` soit saine et que `migrate` ait réussi.
 
 Le registre inclut les 20 services et 54 fiches agents de référence. Les routes persistantes actuelles couvrent les agents/services, le pointage QR, le pointage au poste partagé par badge, les plannings/jours fériés, les badges versionnés, l’historique, les anomalies, le tableau de bord, les classements mensuels, la messagerie générale et l’export de sauvegarde métier réservé à l’administrateur. Aucune de ces routes ne doit retomber sur les données de démonstration.
 
