@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,14 +21,12 @@ const sourceDatabase = 'fann_pointage_test';
 const sourceUser = 'fann_test';
 const realDocker = findExecutable('docker');
 const fakeBin = join(temp, 'bin');
-const dumpFile = join(temp, 'base.dump');
 const cipherFile = join(temp, 'archive.tar.enc');
 const keyFile = join(temp, 'backup.key');
 const wrappedCipherFile = join(temp, 'archive.enc');
 const archiveTar = join(temp, 'archive.tar');
 const verifiedCipherFile = join(temp, 'verified-cipher.enc');
 const verifiedTar = join(temp, 'verified.tar');
-const verifiedDump = join(temp, 'verified-base.dump');
 const wrapperFile = join(fakeBin, 'docker');
 
 let containerStarted = false;
@@ -84,14 +82,14 @@ function wait(ms) {
 
 async function waitForPostgres() {
   for (let attempt = 1; attempt <= 60; attempt += 1) {
-    const probe = docker(['exec', container, 'pg_isready', '-h', '127.0.0.1', '-U', sourceUser, '-d', sourceDatabase], { allowFailure: true, timeout: 5_000 });
-    if (probe.status === 0) return;
+    // pg_isready seul peut répondre trop tôt, avant la fin des scripts initdb.d.
+    const probe = docker(['exec', container, 'psql', '-U', sourceUser, '-d', sourceDatabase, '-At', '-v', 'ON_ERROR_STOP=1', '-c', "SELECT count(*) FROM app_schema_migrations WHERE version='0027_indexes_performance_operational'"], { allowFailure: true, timeout: 5_000 });
+    if (probe.status === 0 && probe.stdout.trim() === '1') return;
     await wait(2_000);
   }
   const logs = docker(['logs', container], { allowFailure: true, timeout: 10_000 });
-  throw new Error(`PostgreSQL temporaire n'est pas devenu prêt.\n${logs.stdout || ''}\n${logs.stderr || ''}`);
+  throw new Error(`PostgreSQL temporaire n'a pas terminé son initialisation jusqu'à 0027.\n${logs.stdout || ''}\n${logs.stderr || ''}`);
 }
-
 function psql(database, sql, options = {}) {
   return docker([
     'exec', container, 'psql', '-U', sourceUser, '-d', database,
@@ -142,10 +140,7 @@ async function main() {
     maxBuffer: 128 * 1024 * 1024,
   }).stdout;
   assert.ok(Buffer.isBuffer(dump) && dump.length > 0, 'pg_dump a produit une archive vide.');
-  await writeFile(dumpFile, dump, { mode: 0o600 });
-
   const staging = join(temp, 'staging');
-  const { mkdir } = await import('node:fs/promises');
   await mkdir(staging, { mode: 0o700 });
   await writeFile(join(staging, 'base.dump'), dump, { mode: 0o600 });
   await writeFile(join(staging, 'env.sauvegarde'),
@@ -207,8 +202,7 @@ async function main() {
     maxBuffer: 128 * 1024 * 1024,
   }).stdout;
   assert.deepEqual(extractedDump, dump, 'Le dump extrait ne correspond pas au dump sauvegardé.');
-  await writeFile(verifiedDump, extractedDump, { mode: 0o600 });
-
+  
   docker(['exec', container, 'createdb', '-U', sourceUser, restoreDatabase]);
   const restoredClone = docker([
     'exec', '-i', container, 'pg_restore', '-U', sourceUser, '-d', restoreDatabase,
