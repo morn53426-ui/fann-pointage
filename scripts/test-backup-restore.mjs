@@ -119,12 +119,14 @@ async function main() {
   containerStarted = true;
   await waitForPostgres();
 
-  const mounts = docker(['inspect', '-f', '{{range .Mounts}}{{.Type}}:{{.Destination}} {{end}}', container]).stdout.trim();
-  if (mounts.split(/\s+/).some((entry) => entry.startsWith('volume:'))) {
-    throw new Error(`Refus de continuer : un volume Docker a été monté dans le conteneur temporaire (${mounts}).`);
+  // Docker expose les montages tmpfs dans HostConfig.Tmpfs ; .Mounts ne les énumère pas nécessairement.
+  const tmpfsConfig = JSON.parse(docker(['inspect', '-f', '{{json .HostConfig.Tmpfs}}', container]).stdout.trim() || 'null');
+  const mounts = JSON.parse(docker(['inspect', '-f', '{{json .Mounts}}', container]).stdout.trim() || '[]');
+  if (mounts.some((mount) => mount.Type === 'volume')) {
+    throw new Error('Refus de continuer : un volume Docker persistant est monté dans le conteneur temporaire.');
   }
-  if (!mounts.includes('tmpfs:/var/lib/postgresql/data')) {
-    throw new Error(`Le stockage PostgreSQL n'est pas le tmpfs attendu : ${mounts}`);
+  if (!tmpfsConfig || !Object.prototype.hasOwnProperty.call(tmpfsConfig, '/var/lib/postgresql/data')) {
+    throw new Error(`Le stockage PostgreSQL n'est pas configuré en tmpfs : ${JSON.stringify(tmpfsConfig)}`);
   }
 
   console.log('[3/8] Insertion d’un agent fictif, création du dump et chiffrement/authentification de l’archive.');
