@@ -112,10 +112,10 @@ async function main() {
     const counts = lancerPsql(['-At', '-c', `SELECT (SELECT count(*) FROM pointages WHERE qr_token_id = '00000000-0000-0000-0000-0000000000e7') || ':' || (SELECT count(*) FROM qr_token_uses WHERE token_id = '00000000-0000-0000-0000-0000000000e7')`], { capture: true });
     assert.equal(counts.stdout.trim(), '1:1', `La transaction QR doit laisser exactement un pointage et un usage. Résultat : ${counts.stdout.trim()}`);
 
-    console.log('\n[3/4] Test de conservation d’une écriture après redémarrage PostgreSQL');
+    console.log('\n[3/4] Test de conservation d’une écriture après redémarrage du processus PostgreSQL (tmpfs conservé)');
     lancerPsql(['-c', `CREATE TABLE IF NOT EXISTS public.fann_test_recovery (id integer PRIMARY KEY, marker text NOT NULL); TRUNCATE public.fann_test_recovery; INSERT INTO public.fann_test_recovery (id, marker) VALUES (1, 'FANN-POSTGRES-RESTART-OK');`]);
-    run(['restart', db]);
-    run(['up', '-d', '--wait', '--wait-timeout', '120', db]);
+    // Le conteneur reste en vie : seul le serveur PostgreSQL redémarre, donc le tmpfs n'est ni démonté ni recréé.
+    run(['exec', '-u', 'postgres', '-T', db, 'pg_ctl', '-D', '/var/lib/postgresql/data/pgdata', '-m', 'fast', '-w', 'restart']);
     const reprise = lancerPsql(['-At', '-c', 'SELECT marker FROM public.fann_test_recovery WHERE id = 1'], { capture: true });
     assert.equal(reprise.stdout.trim(), 'FANN-POSTGRES-RESTART-OK', 'La base n’a pas conservé l’écriture après redémarrage.');
 
