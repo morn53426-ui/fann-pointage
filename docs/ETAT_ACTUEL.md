@@ -6,7 +6,7 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 ## État de livraison
 
 - Branche de travail : `fix/p0-backup-restore-security`
-- Révision contrôlée : `04546766b5c434c812a15779bf2736cf07dab59e`
+- Révision de base de la PR #1 vérifiée : `f9b76e22e44d6b8826738e372f3057f122bdf7c4` (19 novembre 2026).
 - Pull Request : [#1 — sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), encore en brouillon.
 - Branche `main` : non modifiée par cette série de corrections.
 - Statut : **préproduction**. La CI est verte, mais la recette sur un clone du VPS/de la base réelle et les validations sur site restent obligatoires avant toute mise en production.
@@ -33,9 +33,9 @@ Migrations opérationnelles les plus récentes :
 
 Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs`, puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md`.
 
-## Vérifications GitHub Actions — révision 04546766
+## Vérifications GitHub Actions — PR #1 et branches de suivi
 
-Les contrôles suivants sont réussis sur cette révision :
+Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 - installation des dépendances et audit des dépendances de production ;
 - vérification de l'absence de fichiers privés et de secrets livrables ;
 - TypeScript et suite de tests Node ;
@@ -43,7 +43,9 @@ Les contrôles suivants sont réussis sur cette révision :
 - intégration sur un PostgreSQL jetable (migrations, QR, concurrence) ;
 - tests de bout en bout Playwright sur Chromium.
 
-Lien : [exécution CI réussie](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343).
+Lien : [exécution CI #79 réussie — PR #1](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851).
+
+Une validation plus poussée de la restauration a également été ajoutée sur la branche de suivi de la PR #3 : [run #91 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504). Elle restaure une archive chiffrée avec des données fictives sur PostgreSQL `tmpfs`, vérifie la migration `0027` deux fois et les privilèges `fann_app`. Cette preuve appartient à la branche empilée de la PR #3 et n'est pas encore intégrée à la tête de la PR #1.
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 
