@@ -11,7 +11,7 @@ Le registre inclut les 20 services et 54 fiches agents de référence. Les route
 
 La gestion des fiches agents et des badges est limitée à l’administrateur côté serveur. L’émission/révocation/renouvellement des badges est auditée ; retirer un badge ne désactive pas l’agent. Le rôle SQL `fann_app` n’est pas superutilisateur et ne possède pas de droits DDL.
 
-**Encore préproduction :** les absences/justifications et rapports détaillés sont désormais routés vers PostgreSQL dans le code de la révision 0.2.0-preproduction.25, avec les migrations 0015 et 0016. Les migrations 0017 et 0018 ajoutent désormais les règles de planning du service Mobil. L’instance Docker, les migrations et les scénarios fonctionnels doivent être validés sur le poste de déploiement avant d’utiliser le produit comme registre officiel de présence.
+**Préproduction — version 0.2.0-preproduction.47 :** les contrôles CI de la révision `0533a6c` sont réussis (TypeScript, tests Node, sauvegardes, PostgreSQL jetable et Playwright). Les migrations du catalogue vont jusqu’à `0027_indexes_performance_operational` ; le script vérifie aussi l’ENUM Mobil `0017`. Cela ne remplace pas la recette d’un clone de la base du site, ni les essais HTTPS, GPS, caméra et impression sur les appareils réels. Ne considérez pas cette version comme un registre officiel de présence avant validation des contrôles de `docs/PREPARATION_PRODUCTION.md`.
 
 ## Configuration
 
@@ -41,7 +41,7 @@ npm run migrate:catalogue
 npm run db:configure-app-role
 ```
 
-Sur une base existante, le script applique les migrations manquantes 0013 à 0026 (en tenant compte de l’ENUM 0017) et configure les privilèges minimaux du rôle runtime. Il ne demande pas de supprimer le volume. Sur un volume neuf, Docker exécute toutes les migrations à l’initialisation et le script confirme celles déjà appliquées.
+Sur une base existante, le script applique les migrations manquantes `0013` à `0016`, vérifie/applique l’ENUM `0017`, puis applique `0018` à `0027` et configure les privilèges minimaux du rôle runtime. Il ne demande pas de supprimer le volume. Sur un volume neuf, Docker exécute toutes les migrations à l’initialisation et le script confirme celles déjà appliquées.
 
 Ensuite démarrez le catalogue :
 
@@ -63,7 +63,7 @@ La suppression dans l’interface est un archivage réversible ; les historiques
 
 ## Base existante et migrations
 
-Les scripts du dossier `supabase/migrations/` sont exécutés automatiquement uniquement au premier démarrage d’un volume PostgreSQL neuf. La reconstruction de l’image ne rejoue pas les migrations sur un volume existant. Pour le registre courant, utilisez `npm run migrate:catalogue`, qui vérifie la table `app_schema_migrations` et applique les migrations 0013 à 0016, puis 0018 à 0026 une seule fois et vérifie l’ENUM ajouté par 0017. Cette commande ne lit aucun fichier nominatif.
+Les scripts du dossier `supabase/migrations/` sont exécutés automatiquement uniquement au premier démarrage d’un volume PostgreSQL neuf. La reconstruction de l’image ne rejoue pas les migrations sur un volume existant. Pour le registre courant, le service Compose `migrate` exécute `scripts/migrate-catalogue.mjs` et `scripts/configurer-role-application.mjs` avant le démarrage de `app`. Le script vérifie `app_schema_migrations`, applique les migrations `0013` à `0016`, vérifie l’ENUM `0017`, puis applique `0018` à `0027` de façon idempotente. La commande ne lit aucun fichier nominatif, sauf si une option d'import initial est explicitement fournie.
 
 Ne faites pas `docker compose down -v` pour « relancer » une migration : cela supprimerait les données du volume. Sauvegardez et testez une restauration avant de changer le schéma d’une base utile.
 
@@ -74,7 +74,7 @@ Ne faites pas `docker compose down -v` pour « relancer » une migration : cela 
 - Le contrôle GPS exige des coordonnées validées ; un rayon seul n’active pas le géorepérage.
 - Le compte administrateur ne doit être remis qu’à une personne autorisée.
 - L'application utilise le rôle runtime `fann_app`, sans `SUPERUSER`, `CREATEDB`, `CREATEROLE`, droit DDL ou bypass global de RLS. Les droits de table couvrent les routes PostgreSQL opérationnelles de cette version ; les permissions de rôle sont contrôlées par l’API et doivent être revalidées avant une évolution du schéma.
-- `/healthz` est la sonde de vie. `/readyz` teste la connexion PostgreSQL, les colonnes opérationnelles utilisées par l’API et la présence des migrations 0013/0014/0015/0016/0018/0019/0020/0021/0022/0023/0024/0025/0026 et le régime Mobil dans l’ENUM ; Compose s'appuie sur `/readyz` pour marquer l'app `healthy`.
+- `/healthz` est la sonde de vie. `/readyz` teste la connexion PostgreSQL, les colonnes opérationnelles utilisées par l’API et la présence des migrations 0013/0014/0015/0016/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027 et le régime Mobil dans l’ENUM ; Compose s'appuie sur `/readyz` pour marquer l'app `healthy`.
 - Les opérations courantes ci-dessus sont maintenant routées vers PostgreSQL, mais restent à valider sur une vraie instance : migrations, émission/révocation de badges, génération de planning, pointages en concurrence, rôles et reprise après arrêt. La prise en charge SQL des absences/justifications et rapports a été ajoutée en 0015 ; ces scénarios exigent toujours un test d’intégration sur la vraie base et un contrôle métier avant production.
 
 ## Essais PostgreSQL sur base jetable
@@ -82,7 +82,7 @@ Ne faites pas `docker compose down -v` pour « relancer » une migration : cela 
 `npm run test:postgres` est réservé aux tests isolés et peut créer/supprimer un conteneur et un volume de test. Ne lancez jamais ces tests sur la base contenant les 54 fiches réelles. Les tests unitaires utilisent également des clients SQL simulés ; seuls les essais sur la vraie base valident l’intégration complète.
 
 
-## Mise à jour applicative (migrations 0021–0026)
+## Mise à jour applicative (migrations 0021–0027)
 
 Pour un déploiement Docker Compose existant, conservez le volume PostgreSQL et exécutez une mise à jour normale :
 
@@ -91,4 +91,4 @@ docker compose build app migrate
 docker compose up -d
 ```
 
-Le service `migrate` applique les migrations manquantes jusqu’à `0026_mobil_gardes_24h_weekends_feries` puis met à jour les droits du rôle `fann_app`. Vérifiez ensuite `/readyz`, connectez-vous comme administrateur et contrôlez l'accès à **Messages** et **Sauvegarde en ligne**. Ne supprimez jamais le volume PostgreSQL pour forcer une migration. Avant production, prenez une sauvegarde chiffrée et testez sa restauration.
+Le service `migrate` applique les migrations manquantes jusqu’à `0027_indexes_performance_operational` (après `0026_mobil_gardes_24h_weekends_feries`) puis met à jour les droits du rôle `fann_app`. Vérifiez ensuite `/readyz`, connectez-vous comme administrateur et contrôlez l'accès à **Messages** et **Sauvegarde en ligne**. Ne supprimez jamais le volume PostgreSQL pour forcer une migration. Avant production, prenez une sauvegarde chiffrée et testez sa restauration.
