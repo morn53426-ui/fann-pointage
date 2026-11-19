@@ -1694,16 +1694,20 @@ function vueBadges() {
         serviceId: service.value, serviceNom: serviceNouveauNom.value.trim(), regime: regime.value,
         photoDataUrl: photoAgentDataUrl,
       } });
-      try {
-        await api(`/api/badges/${encodeURIComponent(r.agent.id)}/emettre`, { methode: "POST" });
-      } catch (badgeErreur) {
-        await chargerBadges(r.agent.serviceId);
-        statutForm.append(h("p", { class: "etat attention", role: "alert" }, `${r.agent.prenom} ${r.agent.nom} : fiche enregistrée, mais l’émission du badge a échoué. ${badgeErreur.message || "Réessayez depuis Agents sans badge actif."}${r.message || ""}`));
-        prenom.value = ""; nom.value = ""; matricule.value = ""; profession.value = ""; adresse.value = ""; telephone.value = ""; photoInput.value = ""; photoAgentDataUrl = ""; photoPreview.hidden = true;
-        photoStatus.className = "note"; photoStatus.textContent = "Fiche créée. Si nécessaire, émettez le badge depuis la liste des agents sans badge actif.";
-        return;
+      const badgeDejaCree = r.badgeCree === true;
+      if (!badgeDejaCree) {
+        try {
+          await api(`/api/badges/${encodeURIComponent(r.agent.id)}/emettre`, { methode: "POST" });
+        } catch (badgeErreur) {
+          await chargerBadges(r.agent.serviceId);
+          statutForm.append(h("p", { class: "etat attention", role: "alert" }, `${r.agent.prenom} ${r.agent.nom} : fiche enregistrée, mais l’émission du badge a échoué. ${badgeErreur.message || "Réessayez depuis Agents sans badge actif."}${r.message || ""}`));
+          prenom.value = ""; nom.value = ""; matricule.value = ""; profession.value = ""; adresse.value = ""; telephone.value = ""; photoInput.value = ""; photoAgentDataUrl = ""; photoPreview.hidden = true;
+          photoStatus.className = "note"; photoStatus.textContent = "Fiche créée. Si nécessaire, émettez le badge depuis la liste des agents sans badge actif.";
+          return;
+        }
       }
-      statutForm.append(h("p", { class: "etat ok", role: "status" }, `${r.agent.prenom} ${r.agent.nom} : fiche et badge enregistrés dans PostgreSQL.`),
+      const sourceEnregistrement = badgeDejaCree ? "dans le stockage de démonstration" : "dans PostgreSQL";
+      statutForm.append(h("p", { class: "etat ok", role: "status" }, `${r.agent.prenom} ${r.agent.nom} : fiche et badge enregistrés ${sourceEnregistrement}.`),
         h("p", { class: r.compteAgent && r.compteAgent.cree === false ? "etat attention" : "note" }, r.message),
         r.compteAgent?.motDePasseProvisoire ? blocCodesProvisoires([{ prenom: r.agent.prenom, nom: r.agent.nom, identifiant: r.compteAgent.identifiant, motDePasseProvisoire: r.compteAgent.motDePasseProvisoire }]) : null);
       prenom.value = ""; nom.value = ""; matricule.value = ""; profession.value = ""; adresse.value = ""; telephone.value = ""; photoInput.value = "";
