@@ -14,8 +14,34 @@ for (const [compte, ecrans] of [["admin", ["#/", "#/anomalies", "#/badges"]], ["
       for (const ecran of ecrans) {
         await page.goto("/" + ecran);
         await page.waitForTimeout(600);
-        const debordement = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-        expect(debordement, `écran ${ecran}`).toBeLessThanOrEqual(0);
+        const mesure = await page.evaluate(() => {
+          const viewport = document.documentElement.clientWidth;
+          const elements = [...document.body.querySelectorAll("*")].map((el) => {
+            const r = el.getBoundingClientRect();
+            const css = getComputedStyle(el);
+            return {
+              tag: el.tagName.toLowerCase(),
+              id: el.id || "",
+              className: typeof el.className === "string" ? el.className.slice(0, 100) : "",
+              texte: (el.textContent || "").trim().replace(/\\s+/g, " ").slice(0, 55),
+              left: Math.round(r.left * 10) / 10,
+              right: Math.round(r.right * 10) / 10,
+              width: Math.round(r.width * 10) / 10,
+              overflowX: css.overflowX,
+              scrollWidth: el.scrollWidth,
+              clientWidth: el.clientWidth,
+            };
+          }).filter((x) => x.right > viewport + 1 && !["auto", "scroll"].includes(x.overflowX))
+            .sort((a, b) => b.right - a.right).slice(0, 12);
+          return {
+            viewport,
+            documentClientWidth: document.documentElement.clientWidth,
+            documentScrollWidth: document.documentElement.scrollWidth,
+            bodyScrollWidth: document.body.scrollWidth,
+            elements,
+          };
+        });
+        expect(mesure.documentScrollWidth - mesure.documentClientWidth, `écran ${ecran} : ${JSON.stringify(mesure)}`).toBeLessThanOrEqual(0);
       }
       const bouton = await page.locator("#deconnexion").boundingBox();
       expect(bouton.x, "bouton Déconnexion à gauche du bord droit").toBeGreaterThanOrEqual(0);
