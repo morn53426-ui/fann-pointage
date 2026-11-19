@@ -47,12 +47,12 @@ if [[ "$args" == *"dropdb -U"* ]]; then
 fi
 
 if [[ "$args" == *"SELECT (SELECT count(*) FROM agents)"* ]]; then
-  printf '1|1|0|0|0|0\\n'
+  printf '1|1|0|0|0|0'
   exit 0
 fi
 
 if [[ "$args" == *"to_regclass"* ]]; then
-  printf '27\\n'
+  printf '27'
   exit 0
 fi
 
