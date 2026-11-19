@@ -46,7 +46,7 @@ Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 
 Lien : [exécution CI #79 réussie — PR #1](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851).
 
-Une validation plus poussée de la restauration a été exécutée sur la branche de suivi qui a porté la PR #3 : [run #91 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504). Elle restaure une archive chiffrée avec des données fictives sur PostgreSQL `tmpfs`, vérifie la migration `0027` deux fois et les privilèges `fann_app`. Ces changements sont repris dans la branche `integration/preproduction-hardening` en vue d'une PR de consolidation vers `main`.
+La matrice responsive étendue a également passé la CI : [run #97 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44623136749). La restauration chiffrée intégrale a été validée sur la branche de suivi de la PR #3 : [run #91 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504), avec données fictives sur PostgreSQL `tmpfs`, migrations `0027` idempotentes et privilèges `fann_app`. Les deux ensembles de modifications sont réunis dans `integration/preproduction-hardening` ; sa propre CI reste le contrôle final avant revue vers `main`.
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 
