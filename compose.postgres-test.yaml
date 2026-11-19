@@ -8,6 +8,10 @@ services:
       context: .
       dockerfile: Dockerfile.postgres
     image: fann-pointage-postgres-test:local
+    # PID 1 reste un superviseur shell ; le serveur PostgreSQL est enfant et peut redémarrer
+    # sans faire disparaître le conteneur ni son tmpfs éphémère.
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["docker-entrypoint.sh postgres & wait $!; sleep infinity"]
     environment:
       POSTGRES_DB: fann_pointage_test
       POSTGRES_USER: fann_test
