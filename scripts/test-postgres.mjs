@@ -123,7 +123,7 @@ async function main() {
     console.log('La base de test est isolée ; aucune donnée réelle n’a été utilisée.');
   } finally {
     if (stackCreated) {
-      const cleanup = spawnSync('docker', [...compose, 'down', '--volumes', '--remove-orphans'], {
+      const cleanup = spawnSync('docker', [...compose, 'down', '--remove-orphans'], {
         cwd: root, encoding: 'utf8', windowsHide: true, stdio: 'inherit', timeout: 120_000,
       });
       if (cleanup.status !== 0) console.error('ATTENTION : vérifiez les conteneurs/volumes de test Docker et supprimez-les si nécessaire.');
