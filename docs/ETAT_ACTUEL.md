@@ -5,10 +5,11 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 
 ## État de livraison
 
-- Branche de travail : `fix/p0-backup-restore-security`
-- Révision de base de la PR #1 vérifiée : `f9b76e22e44d6b8826738e372f3057f122bdf7c4` (19 novembre 2026).
-- Pull Request : [#1 — sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), encore en brouillon.
-- Branche `main` : non modifiée par cette série de corrections.
+- Branche de consolidation : `integration/preproduction-hardening`
+- Base actuelle de `main` : `bafb11c7ac403eebbc00c5465eef4b509af812ca` (fusion de la PR #1, le 19 novembre 2026).
+- PR #1 : [sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), fusionnée dans `main` le 19 novembre 2026.
+- Les PR #2 et #4 ont été fusionnées dans la branche corrective ; la PR #3 dans sa branche de suivi. Leur consolidation vers `main` est portée par `integration/preproduction-hardening`.
+- `main` contient désormais les changements de la PR #1. Les changements des PR #2, #3 et #4 attendent encore la revue de la consolidation vers `main`.
 - Statut : **préproduction**. La CI est verte, mais la recette sur un clone du VPS/de la base réelle et les validations sur site restent obligatoires avant toute mise en production.
 
 ## Fonctions présentes
@@ -33,7 +34,7 @@ Migrations opérationnelles les plus récentes :
 
 Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs`, puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md`.
 
-## Vérifications GitHub Actions — PR #1 et branches de suivi
+## Vérifications GitHub Actions — branches de correction et de consolidation
 
 Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 - installation des dépendances et audit des dépendances de production ;
@@ -45,7 +46,7 @@ Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 
 Lien : [exécution CI #79 réussie — PR #1](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851).
 
-Une validation plus poussée de la restauration a également été ajoutée sur la branche de suivi de la PR #3 : [run #91 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504). Elle restaure une archive chiffrée avec des données fictives sur PostgreSQL `tmpfs`, vérifie la migration `0027` deux fois et les privilèges `fann_app`. Cette preuve appartient à la branche empilée de la PR #3 et n'est pas encore intégrée à la tête de la PR #1.
+Une validation plus poussée de la restauration a été exécutée sur la branche de suivi qui a porté la PR #3 : [run #91 réussi](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504). Elle restaure une archive chiffrée avec des données fictives sur PostgreSQL `tmpfs`, vérifie la migration `0027` deux fois et les privilèges `fann_app`. Ces changements sont repris dans la branche `integration/preproduction-hardening` en vue d'une PR de consolidation vers `main`.
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 
