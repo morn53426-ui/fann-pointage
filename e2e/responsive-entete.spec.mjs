@@ -2,7 +2,7 @@
 import { test, expect } from "@playwright/test";
 import { MOT_DE_PASSE_E2E } from "../playwright.config.mjs";
 
-for (const [compte, ecrans] of [["admin", ["#/", "#/anomalies", "#/badges"]], ["agent-n1", ["#/pointage"]]]) {
+for (const [compte, ecrans] of [["admin", ["#/", "#/tableau", "#/anomalies", "#/absences", "#/rapports", "#/planning", "#/badges", "#/emargement"]], ["agent-n1", ["#/pointage", "#/historique"]]]) {
   for (const largeur of [320, 360, 390, 430, 768, 1024, 1440]) {
     test(`${compte} · ${largeur} px : pas de défilement horizontal`, async ({ page }) => {
       const hauteur = largeur >= 1024 ? 900 : largeur >= 768 ? 1024 : 740;
@@ -14,6 +14,7 @@ for (const [compte, ecrans] of [["admin", ["#/", "#/anomalies", "#/badges"]], ["
       await expect(page.locator("#deconnexion")).toBeVisible();
       for (const ecran of ecrans) {
         await page.goto("/" + ecran);
+        await expect(page.locator("h1").first(), `titre de la vue ${ecran}`).toBeVisible();
         await page.waitForTimeout(600);
         const mesure = await page.evaluate(() => {
           const viewport = document.documentElement.clientWidth;
