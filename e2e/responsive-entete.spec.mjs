@@ -3,9 +3,10 @@ import { test, expect } from "@playwright/test";
 import { MOT_DE_PASSE_E2E } from "../playwright.config.mjs";
 
 for (const [compte, ecrans] of [["admin", ["#/", "#/anomalies", "#/badges"]], ["agent-n1", ["#/pointage"]]]) {
-  for (const largeur of [320, 390]) {
+  for (const largeur of [320, 360, 390, 430, 768, 1024, 1440]) {
     test(`${compte} · ${largeur} px : pas de défilement horizontal`, async ({ page }) => {
-      await page.setViewportSize({ width: largeur, height: 740 });
+      const hauteur = largeur >= 1024 ? 900 : largeur >= 768 ? 1024 : 740;
+      await page.setViewportSize({ width: largeur, height: hauteur });
       await page.goto("/");
       await page.getByLabel("Identifiant").fill(compte);
       await page.getByLabel("Mot de passe").fill(MOT_DE_PASSE_E2E);
