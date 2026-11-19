@@ -135,6 +135,7 @@ test("banc PostgreSQL : environnement jetable, concurrence QR et reprise", () =>
   assert.match(runner, /Promise\.all/);
   assert.match(runner, /qr_token_uses/);
   assert.match(runner, /FANN-POSTGRES-RESTART-OK/);
+  assert.match(runner, /pg_ctl/);
   assert.match(runner, /down', '--remove-orphans/);
   assert.doesNotMatch(runner, /down', '--volumes/, "le nettoyage ne doit jamais supprimer de volume PostgreSQL");
   assert.equal(packageJson.scripts?.["test:postgres"], "node scripts/test-postgres.mjs");
