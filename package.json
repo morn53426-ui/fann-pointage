@@ -1,0 +1,48 @@
+{
+  "name": "fann-pointage",
+  "version": "0.2.0-preproduction.47",
+  "private": true,
+  "description": "FANN POINTAGE - pointage des brancardiers du CHNUF (fourni par Sendimbeul SARL)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test --test-concurrency=4 \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "demo": "node --experimental-strip-types src/api/main.ts",
+    "test:security": "node --experimental-strip-types --test --test-concurrency=4 src/api/api.test.ts src/api/serveur.test.ts src/api/configuration.test.ts src/db/migrations.test.ts src/classement/classement.test.ts src/api/auth-postgres.test.ts src/api/routes-auth-postgres.test.ts",
+    "start:demo": "node --experimental-strip-types src/api/main.ts",
+    "check": "npm run typecheck && npm test",
+    "test:e2e:process": "node scripts/test-e2e-process.mjs",
+    "test:postgres": "node scripts/test-postgres.mjs",
+    "test:postgres:unit": "node --experimental-strip-types --test --test-concurrency=2 src/pointage/postgres.test.ts",
+    "test:auth:postgres": "node --experimental-strip-types --test --test-concurrency=2 src/api/auth-postgres.test.ts src/api/routes-auth-postgres.test.ts",
+    "auth:postgres": "node --env-file=.env --experimental-strip-types src/api/main-postgres-auth.ts",
+    "admin:postgres": "node --env-file=.env --experimental-strip-types src/api/creer-admin-postgres.ts",
+    "setup:env": "node scripts/init-env.mjs",
+    "env:reparer": "node scripts/reparer-env.mjs",
+    "setup:upgrade-runtime-role": "node scripts/upgrade-env-app-role.mjs",
+    "db:configure-app-role": "node --env-file=.env scripts/configurer-role-application.mjs",
+    "migrate:catalogue": "node --env-file=.env scripts/migrate-catalogue.mjs",
+    "db:upgrade": "npm run migrate:catalogue && npm run db:configure-app-role",
+    "start:catalogue": "node --env-file=.env --experimental-strip-types src/api/main-postgres-catalogue.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "recette:api": "node scripts/recette-api.mjs",
+    "check:delivery": "node scripts/check-delivery.mjs",
+    "check:delivery:local": "node scripts/check-delivery.mjs --local",
+    "audit:prod": "npm audit --omit=dev --registry=https://registry.npmjs.org",
+    "health": "node scripts/verifier-sante.mjs",
+    "planning:urgences": "node --experimental-strip-types src/regimes/urgences/planning-cli.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.15.5",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}

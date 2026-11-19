@@ -1,0 +1,11 @@
+# PostgreSQL autonome pour initialiser/tester le schéma de FANN POINTAGE.
+FROM postgres:17-alpine
+
+# Les migrations sont exécutées dans l'ordre lexical par l'entrypoint officiel.
+COPY supabase/migrations/*.sql /docker-entrypoint-initdb.d/
+COPY supabase/seed.sql /docker-entrypoint-initdb.d/9999_seed.sql
+COPY scripts/docker-init-create-app-role.sh /docker-entrypoint-initdb.d/0000_create_app_role.sh
+COPY scripts/docker-init-grant-app-role.sh /docker-entrypoint-initdb.d/zzzz_grant_app_role.sh
+COPY scripts/grant-runtime-role.sql /opt/fann/grant-runtime-role.sql
+COPY supabase/tests/ /opt/fann-tests/
+RUN chmod 0755 /docker-entrypoint-initdb.d/0000_create_app_role.sh /docker-entrypoint-initdb.d/zzzz_grant_app_role.sh

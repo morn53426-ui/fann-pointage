@@ -1,0 +1,29 @@
+/* GÉNÉRÉ depuis les blocs @media print de styles.css : sert à capturer les feuilles en PDF sur téléphone. Régénérer si l'impression change. */
+html, body { width:100%; height:auto; background:#fff !important; color:#000; margin:0 !important; padding:0 !important; }
+  .entete, .menu, .saut, .banniere-demo { display:none !important; }
+  .apercu-impression-actions { display:none !important; }
+  main { display:block !important; width:100% !important; max-width:none !important; padding:0 !important; margin:0 !important; }
+  main > *:not(.impression-badges-recto-verso):not(.zone-imprimable) { display:none !important; }
+  .zone-imprimable { display:block !important; visibility:visible !important; margin:0 !important; padding:0 !important; }
+  .barre-impression, .hors-impression { display:none !important; }
+  .impression-badges-recto-verso { display:block !important; visibility:visible !important; margin:0 !important; padding:0 !important; }
+  .feuille-badges { display:grid !important; grid-template-columns:repeat(2,86mm); grid-template-rows:repeat(4,54mm); grid-auto-rows:54mm; gap:2mm 4mm; align-content:start; width:176mm; height:222mm; margin:0 auto; padding:0; overflow:hidden; break-inside:avoid; page-break-inside:avoid; break-after:page; page-break-after:always; }
+  .feuille-badges:last-child { break-after:auto; page-break-after:auto; }
+  .badge-print-face { display:block; width:86mm; height:54mm; min-width:86mm; min-height:54mm; margin:0; padding:0; break-inside:avoid; page-break-inside:avoid; }
+  .badge-visuel { width:86mm; height:54mm; min-height:54mm; aspect-ratio:auto; border:0.2mm solid #b9c6bd; border-radius:3mm; box-shadow:none; filter:none; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .badge-demo .badge-visuel { filter:none; }
+.page-impression { padding:0; background:#fff; }
+  .page-impression .zone-imprimable { display:block !important; }
+  .feuille-emargement { border:0; border-radius:0; padding:0; break-after:page; page-break-after:always; break-inside:avoid-page; }
+  .feuille-emargement:last-child { break-after:auto; page-break-after:auto; }
+  .emarg-defilement { overflow:visible; }
+  .emarg-table { min-width:0; }
+  .emarg-titre, .emarg-table th, .emarg-table td { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+  .emarg-case { height:10.5mm; }
+/* Une affiche = exactement une page A4 (297 − 2×8 mm de marge = 281 mm ; 268 mm laisse de la marge pour les en-têtes/pieds du navigateur). */
+  .affiche-qr { box-sizing:border-box; height:268mm; max-height:268mm; overflow:hidden; margin:0 auto; border-width:1.2mm; border-radius:0; padding:8mm 12mm; break-after:page; page-break-after:always; display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
+  .affiche-qr:last-child { break-after:auto; page-break-after:auto; }
+  .affiche-qr > * { margin-top:0; margin-bottom:0; }
+  .affiche-entete { width:100%; justify-content:center; }
+  .affiche-pied { width:100%; margin:0; }
+  .affiche-service { font-size:26pt; } .affiche-etapes { font-size:12pt; align-self:center; } .affiche-qr-image { width:100mm; height:100mm; margin:0 auto; }

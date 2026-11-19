@@ -1,0 +1,64 @@
+# Surcouche VPS : HTTPS public (certificat Let's Encrypt automatique) devant l'application.
+# Démarrage (à utiliser À LA PLACE de compose.https.yaml) :
+#   docker compose -f compose.yaml -f compose.vps.yaml up -d
+# L'application et la base restent liées à 127.0.0.1 : seul Caddy (ports 80/443) est exposé.
+x-journaux: &journaux
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  app:
+    environment:
+      # Caddy pose X-Forwarded-For ; sans cela le limiteur de connexions verrait une seule IP (celle du proxy).
+      TRUST_PROXY: "1"
+      # Déploiement public : refuse le démarrage si le mot de passe provisoire est prévisible (FANN_MDP_PROVISOIRE=telephone).
+      FANN_ENV: production
+    logging: *journaux
+
+  migrate:
+    logging: *journaux
+
+  db:
+    logging: *journaux
+    # Test en TCP : pendant l'initialisation, Postgres démarre un serveur temporaire qui n'écoute que sur un socket local.
+    # Sans -h, la base était déclarée « healthy » trop tôt et « migrate » échouait avec ECONNREFUSED.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      FANN_HOSTNAME: ${FANN_HOSTNAME:?Définissez FANN_HOSTNAME dans .env (nom de domaine public du serveur)}
+      ACME_EMAIL: ${ACME_EMAIL:?Définissez ACME_EMAIL dans .env (adresse pour les avis Let's Encrypt)}
+    ports:
+      - "80:80"        # requis par Let's Encrypt (validation) et pour la redirection vers HTTPS
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile.vps:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    logging: *journaux
+
+volumes:
+  caddy_data:
+  caddy_config:

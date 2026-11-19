@@ -1,0 +1,5 @@
+# Les scripts shell s'exécutent sous Linux (conteneurs) : toujours LF, jamais CRLF.
+*.sh text eol=lf
+Dockerfile* text eol=lf
+Caddyfile text eol=lf
+*.sql text eol=lf

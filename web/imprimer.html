@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b5d2a">
+  <title>Impression · FANN POINTAGE</title>
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="page-impression">
+  <div class="barre-impression">
+    <a id="retour" class="lien-retour" href="/">← Retour à l'application</a>
+    <button id="imprimer" type="button">Imprimer / Enregistrer en PDF</button>
+    <button id="pdf" type="button" class="secondaire">Créer un fichier PDF (iPhone / Android)</button>
+    <div id="pdf-resultat" class="aide-impression" role="status" hidden></div>
+    <p id="aide-impression" class="note aide-impression" role="alert" hidden></p>
+    <p class="note">Si le bouton ne réagit pas (téléphone) : ouvrez le menu de partage du navigateur, puis « Imprimer » ou « Enregistrer au format PDF ». Choisissez le format A4 et l'échelle 100 %.</p>
+  </div>
+  <div id="document" class="zone-imprimable"></div>
+  <div id="pdf-etat" role="status" hidden>Création du PDF… patientez quelques secondes.</div>
+  <script type="module" src="/imprimer.js"></script>
+</body>
+</html>

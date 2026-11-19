@@ -1,0 +1,34 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+npm-debug.log*
+coverage
+.nyc_output
+.DS_Store
+Thumbs.db
+*.zip
+*.log
+
+# Données d'exécution / sauvegardes locales
+data
+*.json.tmp
+
+# Les dépendances runtime sont installées dans l’image Docker ; ne pas copier celles du poste hôte.
+node_modules
+sauvegardes/
+deploy/
+compose.https.yaml
+
+registre-prive/
+docs/REGISTRE_REEL_*.md
+**/*.dump
+**/*.backup
+**/*.bak
+**/*.sql.gz
+**/*.sqlite
+**/*.sqlite3
+backups/
+playwright-report/
+test-results/

@@ -1,0 +1,27 @@
+# Secrets locaux
+.env
+.env.*
+!.env.example
+node_modules/
+coverage/
+.nyc_output/
+.DS_Store
+Thumbs.db
+*.log
+data/
+backups/
+*.zip
+
+playwright-report/
+test-results/
+sauvegardes/
+
+# Données nominatives, exports privés et sauvegardes : jamais versionnés
+registre-prive/
+docs/REGISTRE_REEL_*.md
+*.dump
+*.backup
+*.bak
+*.sql.gz
+*.sqlite
+*.sqlite3

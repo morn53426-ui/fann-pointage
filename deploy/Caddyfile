@@ -1,0 +1,19 @@
+{
+	# Accès par adresse IP : un navigateur n'envoie alors aucun nom de site (SNI) et, derrière Docker, Caddy ne retrouve pas
+	# le bon certificat (erreur « réponse non valide » / SEC_E_INTERNAL_ERROR). On lui indique le nom à utiliser par défaut.
+	default_sni {$FANN_HOSTNAME}
+}
+
+# Reverse proxy HTTPS (Caddy) — utilisé uniquement par compose.https.yaml.
+# FANN_HOSTNAME : nom DNS interne ou adresse IP du serveur (voir docs/HTTPS_ET_SAUVEGARDES.md).
+{$FANN_HOSTNAME} {
+	# Autorité interne de Caddy : les postes doivent faire confiance à son certificat racine (voir la documentation).
+	tls internal
+	encode zstd gzip
+	# Force HTTPS pour 1 an après la première visite (empêche le retour en HTTP simple).
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:8787 {
+		# Remplace tout X-Forwarded-For envoyé par le client : l'application lit le DERNIER maillon (TRUST_PROXY=1).
+		header_up X-Forwarded-For {remote_host}
+	}
+}

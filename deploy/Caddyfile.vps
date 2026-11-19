@@ -1,0 +1,24 @@
+{
+    email {$ACME_EMAIL}
+}
+
+fannpointage.com {
+    redir https://www.fannpointage.com{uri} permanent
+}
+
+www.fannpointage.com {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        -Server
+    }
+
+    request_body {
+        max_size 256KB
+    }
+
+    reverse_proxy app:8787 {
+        header_up X-Forwarded-For {remote_host}
+    }
+}

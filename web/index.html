@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10263b">
+  <meta name="description" content="FANN POINTAGE – La plateforme numérique de gestion du personnel, des plannings et du suivi des présences de l’Hôpital Fann.">
+  <meta name="color-scheme" content="light">
+  <title>FANN POINTAGE</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="saut" href="#contenu">Aller au contenu</a>
+  <header class="entete">
+    <img src="/icons/logo-chnuf.png" alt="Logo du CHNUF" width="64" height="64">
+    <div><strong>FANN POINTAGE</strong><small>CHNUF · Solution fournie par Sendimbeul SARL</small></div>
+    <div id="compteurs" class="compteurs" role="status" aria-live="polite" hidden></div>
+    <button id="deconnexion" class="secondaire" hidden>Déconnexion</button>
+  </header>
+  <div class="banniere-demo" role="status" hidden>MODE DÉMONSTRATION — données de test uniquement. Ne pas saisir de données personnelles réelles avant la validation de la version de production.</div>
+  <nav id="menu" class="menu" aria-label="Navigation principale" hidden></nav>
+  <main id="contenu" tabindex="-1"></main>
+  <script src="/vendor/qrcode.js"></script>
+  <script src="/vendor/jsQR.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

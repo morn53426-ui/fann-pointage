@@ -1,0 +1,34 @@
+# Environnement PostgreSQL JETABLE pour valider les migrations, contraintes et le redémarrage.
+# Aucun port n'est publié sur l'hôte ; le volume est supprimé par scripts/test-postgres.mjs.
+name: fann-pointage-postgres-test
+
+services:
+  postgres-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: fann-pointage-postgres-test:local
+    environment:
+      POSTGRES_DB: fann_pointage_test
+      POSTGRES_USER: fann_test
+      # Secret non sensible réservé à une base de test isolée, non publiée sur l'hôte.
+      POSTGRES_PASSWORD: fann_test_only_not_for_real_data
+      POSTGRES_APP_USER: fann_app
+      POSTGRES_APP_PASSWORD: fann_test_app_secret_url_safe_012345678901234567890123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    shm_size: 128mb
+    security_opt:
+      - no-new-privileges:true
+    # Test en TCP : pendant l'initialisation, l'entrypoint lance un serveur temporaire qui n'écoute que sur un socket local.
+    # Sans -h 127.0.0.1, le conteneur était « Healthy » avant la fin des migrations (échecs aléatoires sur machine lente).
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 3s
+      timeout: 5s
+      retries: 100
+      start_period: 20s
+
+volumes:
+  postgres_test_data:

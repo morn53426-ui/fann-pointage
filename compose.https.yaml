@@ -1,0 +1,33 @@
+# Surcouche HTTPS facultative. Démarrage :
+#   docker compose -f compose.yaml -f compose.https.yaml up -d
+# L'application reste jointe uniquement sur 127.0.0.1 (ne définissez PAS APP_BIND_ADDRESS=0.0.0.0 avec cette surcouche) :
+# seul le proxy HTTPS est exposé sur le réseau. Les navigateurs exigent HTTPS pour la caméra (scan QR) et la géolocalisation.
+services:
+  app:
+    environment:
+      # Le proxy de confiance pose X-Forwarded-For : sans cela, tous les postes partagent l'IP de la passerelle Docker
+      # et le limiteur de tentatives bloque tout le monde ensemble.
+      TRUST_PROXY: "1"
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      FANN_HOSTNAME: ${FANN_HOSTNAME:?Définissez FANN_HOSTNAME dans .env (nom DNS interne ou adresse IP du serveur)}
+    ports:
+      - "${HTTPS_BIND_ADDRESS:-0.0.0.0}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  caddy_data:
+  caddy_config:
