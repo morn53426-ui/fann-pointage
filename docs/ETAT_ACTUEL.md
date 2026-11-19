@@ -6,7 +6,7 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 ## État de livraison
 
 - Branche de travail : `fix/p0-backup-restore-security`
-- Révision contrôlée : `0533a6cbb01f95450b2c6c6fa797f538f413ec38`
+- Révision contrôlée : `04546766b5c434c812a15779bf2736cf07dab59e`
 - Pull Request : [#1 — sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), encore en brouillon.
 - Branche `main` : non modifiée par cette série de corrections.
 - Statut : **préproduction**. La CI est verte, mais la recette sur un clone du VPS/de la base réelle et les validations sur site restent obligatoires avant toute mise en production.
@@ -33,7 +33,7 @@ Migrations opérationnelles les plus récentes :
 
 Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs`, puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md`.
 
-## Vérifications GitHub Actions — révision 0533a6c
+## Vérifications GitHub Actions — révision 04546766
 
 Les contrôles suivants sont réussis sur cette révision :
 - installation des dépendances et audit des dépendances de production ;
@@ -43,7 +43,7 @@ Les contrôles suivants sont réussis sur cette révision :
 - intégration sur un PostgreSQL jetable (migrations, QR, concurrence) ;
 - tests de bout en bout Playwright sur Chromium.
 
-Lien : [exécution CI réussie](https://github.com/morn53426-ui/fann-pointage/actions/runs/44587429471).
+Lien : [exécution CI réussie](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343).
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 
