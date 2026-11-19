@@ -127,7 +127,7 @@ test.describe("Badges professionnels", () => {
     expect(petits).toEqual([]);
   });
 
-  for (const [nom, largeur, hauteur] of [["bureau", 1440, 900], ["tablette", 768, 1024], ["mobile", 390, 844], ["petit mobile", 320, 568]]) {
+  for (const [nom, largeur, hauteur] of [["bureau", 1440, 900], ["ordinateur portable", 1024, 768], ["tablette", 768, 1024], ["mobile large", 430, 932], ["mobile", 390, 844], ["mobile étroit", 360, 800], ["petit mobile", 320, 568]]) {
     test(`responsive ${nom} : pas de défilement horizontal`, async ({ page }, info) => {
       await page.setViewportSize({ width: largeur, height: hauteur });
       await ouvrirBadges(page);
