@@ -2,7 +2,7 @@
 
 Mise à jour : 19 novembre 2026  
 Version source : `0.2.0-preproduction.47`  
-Révision contrôlée : `04546766b5c434c812a15779bf2736cf07dab59e` sur `fix/p0-backup-restore-security`.
+Révision de référence contrôlée : `bea74bb6d3bb1770e2c7a8bc5b35f0f85ed8e310` sur `fix/p0-backup-restore-security`.
 
 **Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
 
@@ -22,7 +22,7 @@ La CI GitHub de la révision ci-dessus a terminé avec succès les étapes suiva
 | Tests d'intégration sur PostgreSQL jetable (migrations, QR, concurrence) | Réussi |
 | Tests E2E Playwright sur Chromium | Réussi |
 
-Exécution de référence : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343).
+Exécution de référence sur la révision `bea74bb6` : [GitHub Actions — succès](https://github.com/morn53426-ui/fann-pointage/actions/runs/44608646615).
 
 Ces résultats ne sont pas une preuve de fonctionnement sur le VPS réel. Ils n'attestent pas non plus le fonctionnement de la caméra, du GPS, du HTTPS avec le DNS définitif ou de l'impression sur les appareils du site.
 
@@ -44,7 +44,22 @@ Le point d'entrée de santé `/readyz` vérifie PostgreSQL et les marqueurs de m
 
 ### 3.1 Isoler l'environnement
 
-Utilisez un VPS de recette ou un hôte Docker distinct, avec ses propres volumes PostgreSQL/runtime et son propre fichier `.env`. Vérifiez avant de poursuivre :
+Utilisez de préférence un VPS de recette ou un daemon Docker distinct, avec ses propres volumes PostgreSQL/runtime et son propre fichier `.env`.
+
+**Attention : l'isolation par nom de projet Compose ne suffit pas dans cette configuration.** Le fichier `compose.yaml` déclare un nom de projet par défaut (`fann-pointage`) et fixe explicitement les noms des volumes `fann-pointage-postgres-data` et `fann-pointage-runtime-data`. Même avec `COMPOSE_PROJECT_NAME` ou `docker compose -p`, ces deux volumes explicitement nommés peuvent être réutilisés. Ne lancez donc pas un clone sur le même daemon Docker tant que vous n'avez pas remplacé ces noms et isolé les ports.
+
+Pour un même daemon Docker, préparez un fichier local non versionné `compose.recette.yaml` contenant au minimum :
+```yaml
+name: fann-pointage-recette
+volumes:
+  fann_pgdata:
+    name: fann-pointage-recette-postgres-data
+  fann_runtime_data:
+    name: fann-pointage-recette-runtime-data
+```
+Dans le `.env` propre à la recette, définissez aussi des ports libres distincts (par exemple `APP_BIND_ADDRESS=127.0.0.1`, `APP_PORT=18787`, `POSTGRES_PORT=54339`) et ne démarrez pas la surcouche VPS qui publie les ports 80/443 déjà utilisés. Lancez ensuite Compose avec `COMPOSE_FILE=compose.yaml:compose.recette.yaml`. Avant toute restauration, vérifiez localement le résultat de `docker compose config` et la liste des volumes : ils doivent tous porter les noms de recette ; ne partagez pas la sortie de configuration, qui peut contenir des secrets.
+
+Vérifiez également avant de poursuivre :
 - le nom du projet Compose, les ports publiés et les volumes sont distincts de la production ;
 - le DNS ou le domaine de recette ne pointe pas vers le serveur public de production ;
 - aucune commande Docker de recette ne cible le daemon/hôte de production ;
