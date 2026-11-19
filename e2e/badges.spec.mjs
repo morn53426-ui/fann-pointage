@@ -171,6 +171,47 @@ test.describe("Badge : profession, pied de page et verso modifiable", () => {
     return carte;
   }
 
+  test("formulaire de création : champs visibles sans débordement aux sept largeurs", async ({ page }) => {
+    await ouvrirBadges(page);
+    for (const [largeur, hauteur] of [[320, 740], [360, 800], [390, 844], [430, 932], [768, 1024], [1024, 900], [1440, 900]]) {
+      await page.setViewportSize({ width: largeur, height: hauteur });
+      await expect(page.getByLabel("Prénom", { exact: true })).toBeVisible();
+      await expect(page.getByLabel("Nom", { exact: true })).toBeVisible();
+      await expect(page.locator("#nouveau-service")).toBeVisible();
+      await expect(page.locator("#nouveau-photo")).toBeAttached();
+      const mesure = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        page: document.documentElement.scrollWidth,
+        form: document.querySelector(".form-creation-badge")?.getBoundingClientRect().toJSON(),
+      }));
+      expect(mesure.page, `formulaire de création à ${largeur}px : ${JSON.stringify(mesure)}`).toBeLessThanOrEqual(mesure.viewport);
+      expect(mesure.form?.left ?? 0).toBeGreaterThanOrEqual(-1);
+      expect(mesure.form?.right ?? largeur).toBeLessThanOrEqual(largeur + 1);
+    }
+  });
+
+  test("fenêtre d'édition du badge : reste dans le viewport aux sept largeurs", async ({ page }) => {
+    await ouvrirBadges(page);
+    const carte = await creerAgentReel(page, "ModalResponsive");
+    await carte.getByRole("button", { name: "Modifier le badge" }).click();
+    const dialogue = page.locator("dialog.dialogue-badge");
+    await expect(dialogue).toBeVisible();
+    for (const [largeur, hauteur] of [[320, 740], [360, 800], [390, 844], [430, 932], [768, 1024], [1024, 900], [1440, 900]]) {
+      await page.setViewportSize({ width: largeur, height: hauteur });
+      const box = await dialogue.boundingBox();
+      const mesure = await page.evaluate(() => ({
+        viewport: document.documentElement.clientWidth,
+        page: document.documentElement.scrollWidth,
+      }));
+      expect(box, `dialogue absent à ${largeur}px`).not.toBeNull();
+      expect(box.x, `bord gauche du dialogue à ${largeur}px`).toBeGreaterThanOrEqual(-1);
+      expect(box.x + box.width, `bord droit du dialogue à ${largeur}px`).toBeLessThanOrEqual(largeur + 1);
+      expect(mesure.page, `page avec dialogue à ${largeur}px`).toBeLessThanOrEqual(mesure.viewport);
+      const contenuSansDébordement = await dialogue.evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
+      expect(contenuSansDébordement, `contenu du dialogue à ${largeur}px`).toBe(true);
+    }
+  });
+
   test("création : profession, adresse et téléphone saisis apparaissent au recto et au verso", async ({ page }, info) => {
     await ouvrirBadges(page);
     const carte = await creerAgentReel(page, "Creation");
