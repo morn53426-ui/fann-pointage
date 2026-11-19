@@ -161,7 +161,12 @@ test.describe("Badge : profession, pied de page et verso modifiable", () => {
     await page.locator("#nouveau-photo").setInputFiles({ name: "photo.png", mimeType: "image/png", buffer: png });
     await expect(page.locator("#aide-photo-badge")).toContainText("Photo prête");
     await page.getByRole("button", { name: "Créer la fiche et le badge" }).click();
-    const carte = page.locator(".badge-imprimable", { hasText: nom.toUpperCase() }).first();
+    // En mode démo, le code du badge est créé avec la fiche : aucune seconde émission PostgreSQL ne doit être tentée.
+    await expect(page.locator(".form-creation-badge .etat.ok")).toContainText("stockage de démonstration");
+    await expect(page.locator(".form-creation-badge .etat.attention")).toHaveCount(0);
+    const carte = page.locator(".badge-imprimable").filter({
+      has: page.locator(".badge-recto .badge-nom").filter({ hasText: new RegExp("^" + nom.toUpperCase() + "$") }),
+    }).first();
     await expect(carte).toBeVisible();
     return carte;
   }
@@ -222,7 +227,9 @@ test.describe("Badge : profession, pied de page et verso modifiable", () => {
     await page.evaluate(() => { window.print = () => {}; });
     await page.getByRole("button", { name: /Imprimer les badges/ }).click();
     await page.emulateMedia({ media: "print" });
-    const verso = page.locator(".feuille-verso .badge-verso", { hasText: "IMPRESSION" }).first();
+    const verso = page.locator(".feuille-verso .badge-verso").filter({
+      has: page.locator(".badge-champ-nom dd").filter({ hasText: /^IMPRESSION$/ }),
+    }).first();
     await expect(verso.locator(".badge-champ-telephone dd")).toHaveText("33 821 00 00");
     const petits = await page.evaluate(() => [...document.querySelectorAll(".feuille-badges .badge-visuel *")]
       .filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))

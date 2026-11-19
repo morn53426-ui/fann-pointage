@@ -6,6 +6,16 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 dump="${1:?Indiquez le fichier .dump}"
 mode="${2:-test}"
+case "$mode" in
+  test) ;;
+  production)
+    # Une restauration VPS doit conserver la surcouche (FANN_ENV=production, TRUST_PROXY et journaux Caddy).
+    if [[ -z "${COMPOSE_FILE:-}" && -f compose.vps.yaml ]]; then
+      export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
+    fi
+    ;;
+  *) echo "Mode inconnu : $mode (test ou production)." >&2; exit 2 ;;
+esac
 [ -s "$dump" ] || { echo "Fichier introuvable ou vide : $dump" >&2; exit 2; }
 docker compose exec -T db pg_restore --list < "$dump" > /dev/null
 
@@ -41,11 +51,19 @@ case "$mode" in
     read -r -p 'Tapez RESTAURER pour confirmer : ' confirmation
     [ "$confirmation" = "RESTAURER" ] || { echo "Annulé."; exit 0; }
     docker compose stop app
-    docker compose exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges --exit-on-error --single-transaction' < "$dump"
-    docker compose run --rm migrate
-    docker compose up -d app
+    if ! docker compose exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges --exit-on-error --single-transaction' < "$dump"; then
+      echo "ÉCHEC : la restauration PostgreSQL a échoué. L'application reste arrêtée ; vérifiez l'état de la base avant de la redémarrer." >&2
+      exit 1
+    fi
+    if ! docker compose run --rm migrate; then
+      echo "ÉCHEC : les migrations après restauration ont échoué. L'application reste arrêtée pour éviter de servir un schéma non validé." >&2
+      exit 1
+    fi
+    if ! docker compose up -d --wait app; then
+      echo "ÉCHEC : l'application n'a pas atteint l'état prêt après la restauration. Contrôlez les journaux et /readyz avant toute ouverture du service." >&2
+      exit 1
+    fi
     docker compose ps
     echo "Restauration terminée. Contrôlez /readyz et les données métier avant de rouvrir le service."
     ;;
-  *) echo "Mode inconnu : $mode (test ou production)" >&2; exit 2;;
 esac

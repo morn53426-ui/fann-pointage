@@ -1,12 +1,12 @@
 # Démarrer FANN POINTAGE sous Windows — registre réel des agents
 
-## Ce que cette version permet (0.2.0-preproduction.44)
+## Version 0.2.0-preproduction.47 — branche de correction
 
-Cette version fonctionne sur un **catalogue persistant PostgreSQL** (54 fiches et 20 services importés). Les API de pointage (QR dynamique, badge sur poste partagé), plannings, jours fériés, badges, absences, rapports, classements, anomalies, messagerie et export métier sont **actives sur PostgreSQL** ; aucune donnée de démonstration n’est utilisée dans ce mode.
+Cette version utilise **PostgreSQL** pour le catalogue, les agents et services, le pointage QR et au poste partagé, les plannings, les jours fériés, les badges, les absences, les rapports, les classements, les anomalies, la messagerie et l’export métier. En mode `postgres-catalogue`, une route non raccordée est refusée : elle ne doit jamais basculer silencieusement vers des données de démonstration. Les 20 services de référence sont gérés par les migrations. Le registre nominatif de 54 références n'est pas inclus dans le dépôt ni importé automatiquement : son import initial, si autorisé, se fait séparément avec un fichier SQL privé (voir `docs/IMPORT_REGISTRE.md`).
 
-**Statut : préproduction.** Ce n’est pas encore autorisé en production hospitalière : la recette sur une vraie base, Docker, HTTPS, caméra/GPS sur les téléphones du site et l’impression réelle restent à valider (voir `docs/PREPARATION_PRODUCTION.md` et `docs/CHECKLIST_PILOTE.md`). Les anciens rapports d’audit et de correctifs sont rangés dans `docs/historique/` : **ne les suivez pas pour installer cette version**.
+**Statut : préproduction uniquement.** La CI de la révision `0533a6c` passe (TypeScript, tests Node, contrôle des sauvegardes, PostgreSQL jetable et Playwright). Cela ne remplace pas la recette d'une copie restaurée de la base, ni les tests HTTPS, caméra/GPS et impression sur les appareils du site. La PR #1 est encore en brouillon. Consultez `docs/PREPARATION_PRODUCTION.md` avant tout pilote. Les rapports de `docs/historique/` sont historiques : ne les utilisez pas comme procédure d'installation.
 
-### Points de sécurité à connaître (v32)
+### Points de sécurité à connaître
 
 - **Mots de passe provisoires des agents : aléatoires par défaut.** Le code (8 caractères) est affiché **une seule fois** à l’administrateur : remettez-le à l’agent séparément du badge. Le mode « téléphone » n’existe plus que sur demande explicite (`FANN_MDP_PROVISOIRE=telephone`) et est refusé au démarrage si `FANN_ENV=production`.
 - **Affiches QR permanentes : adresse contrôlée.** L’écran « QR de pointage » refuse de produire des affiches définitives pour une adresse en `http`, `localhost`, tunnel temporaire ou IP non routable (il ne produit alors que des affiches filigranées « TEST — NE PAS AFFICHER »). Une adresse du réseau interne en https (ex. `https://192.168.1.80`) demande une confirmation explicite.
@@ -59,7 +59,7 @@ docker compose up --build -d db
 docker compose ps
 ```
 
-Sur une **base existante** créée par une ancienne version, les scripts PostgreSQL d'initialisation ne se rejouent pas avec le volume déjà présent. Une fois `db` sain, crée/actualise le rôle runtime avec le compte administrateur conservé dans `.env` :
+Sur une **base existante** créée par une ancienne version, les scripts PostgreSQL d'initialisation ne se rejouent pas avec le volume déjà présent. Sur un volume existant, le service Compose `migrate` applique les migrations manquantes et configure automatiquement le rôle runtime `fann_app` avant le démarrage de l'application. La commande manuelle ci-dessous reste disponible pour une intervention contrôlée :
 
 ```bash
 npm run db:configure-app-role
@@ -73,26 +73,22 @@ Attends que le service `db` soit `healthy` :
 docker compose logs --tail=80 db
 ```
 
-## 4. Importer les 54 fiches sans effacer les données
+## 4. Appliquer les migrations et, si autorisé, importer le registre
 
-Applique la migration du catalogue depuis le terminal Windows :
+Les migrations de schéma sont séparées de l'import nominatif. La commande `npm run migrate:catalogue` applique les migrations `0013` à `0016`, vérifie l'ENUM Mobil `0017`, puis applique `0018` à `0027`. Elle crée/vérifie les 20 services de référence, mais **n'importe pas les 54 fiches nominatives** à elle seule. Le service Compose `migrate` exécute aussi la configuration des droits de `fann_app` avant le démarrage de l'application.
 
-```bash
-npm run migrate:catalogue
-```
-
-Résultat attendu : `Migration 0013 appliquée. Fiches de la liste photo présentes : 54/54.` Si la migration a été exécutée par le tout premier démarrage d’un volume neuf, le script peut signaler qu’elle est déjà appliquée. Ne supprime **jamais** le volume pour essayer de la relancer.
-
-Vérification SQL non destructive :
+Vérifie les données sans rien modifier :
 
 ```bash
 docker compose exec -T db psql -U fann_admin -d fann_pointage -c "SELECT count(*) AS agents_photo FROM agents WHERE source_ref LIKE 'FANN-PHOTO-%';"
-docker compose exec -T db psql -U fann_admin -d fann_pointage -c "SELECT nom, regime_defaut, actif FROM services ORDER BY nom;"
+docker compose exec -T db psql -U fann_admin -d fann_pointage -c "SELECT count(*) AS services FROM services WHERE actif;"
 ```
 
-La première commande doit retourner `54`. Si tu as changé `POSTGRES_USER` ou `POSTGRES_DB`, remplace `fann_admin` et `fann_pointage` par les valeurs exactes de `.env`.
+Selon l'environnement, le nombre de fiches du registre initial doit être `0` (aucun import nominatif effectué) ou `54` (import autorisé déjà appliqué). Un nombre partiel doit être examiné : ne supprime pas des lignes et ne relance pas un import à l'aveugle. Les services de référence attendus sont au nombre de 20.
 
-La migration conserve les matricules vides, car la liste papier n’en fournit pas. Les régimes importés sont des propositions initiales : vérifie-les service par service avant toute utilisation opérationnelle. Le numéro de liste ne devient pas un matricule officiel.
+Si l'établissement a autorisé l'import et qu'un fichier SQL privé validé est disponible, suis strictement `docs/IMPORT_REGISTRE.md` : sauvegarde préalable, base de recette isolée, prévisualisation avec `--preview-registre`, comparaison et approbation, puis application avec `--apply-registre`. Le fichier SQL et les identités ne doivent jamais être ajoutés au dépôt, aux journaux, à l'archive applicative ni aux tickets.
+
+Les matricules absents de la source restent vides ; aucun matricule ne doit être inventé. Les régimes importés sont à faire valider par l'administration avant la création des plannings.
 
 ## 5. Créer ou utiliser le compte administrateur
 
@@ -138,7 +134,7 @@ Quelques graphies de la photo demandent confirmation auprès de la liste officie
 
 Ne lance pas `docker compose down -v` : cela supprimerait le volume PostgreSQL. Avant une migration de schéma en production, sauvegarde la base et teste une restauration.
 
-Cette version utilise PostgreSQL pour le catalogue, les modifications et le journal associé, mais n’a pas encore raccordé les pointages/plannings à cette base. N’utilise pas encore les classements ni les pointages comme registre officiel. Le passage en production exige encore une migration complète du flux de pointage, les tests sur vraie base, la restauration, les droits par rôle/service et le contrôle GPS en conditions réelles.
+Les flux métier décrits plus haut sont raccordés à PostgreSQL dans le code de cette version, mais la préproduction n'est pas une autorisation d'usage officiel. Avant tout usage réel, il faut restaurer une sauvegarde authentifiée sur un clone isolé, migrer ce clone jusqu'à `0027`, vérifier les rôles et les scénarios métier, puis valider HTTPS, caméra/GPS, impression et pilote avec l'établissement. La CI verte seule ne suffit pas.
 
 
 ## Dépendances et réseau Docker
@@ -149,7 +145,7 @@ Si Docker échoue avant le build en téléchargeant `node:22.23.4-bookworm-slim`
 
 ## Mise à jour d'une base existante
 
-Depuis cette version, `docker compose up --build -d app` démarre automatiquement le service `migrate`, qui applique les migrations 0013 à 0016 manquantes puis les droits du rôle `fann_app`, **avant** l'application. Rien n'est supprimé et la commande est rejouable. En cas de doute :
+Depuis la version 47, `docker compose up --build -d app` démarre automatiquement le service `migrate`, qui applique les migrations manquantes jusqu'à `0027` (avec vérification séparée de l'ENUM `0017`) puis configure les droits du rôle `fann_app`, **avant** l'application. Rien n'est supprimé par ce processus et il est rejouable. En cas de doute :
 
 ```bash
 docker compose logs migrate

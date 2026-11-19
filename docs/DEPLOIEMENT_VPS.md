@@ -1,6 +1,6 @@
 # Déploiement de FANN POINTAGE sur un VPS (Ubuntu 24.04, HTTPS public)
 
-Ce kit s'ajoute au projet (v20) sans modifier son code : `compose.vps.yaml`, `deploy/Caddyfile.vps` et `scripts/vps/`.
+Ce kit s'ajoute au projet `0.2.0-preproduction.47` : `compose.vps.yaml`, `deploy/Caddyfile.vps` et `scripts/vps/`. Cette version reste en préproduction jusqu'à validation de la recette sur un clone.
 Il met en place : durcissement du serveur, HTTPS Let's Encrypt automatique (Caddy), secrets aléatoires, démarrage, création du compte `admin`, sauvegardes chiffrées quotidiennes.
 
 ## Pré-requis
@@ -67,18 +67,29 @@ bash scripts/vps/04-installer-sauvegarde.sh
 - Copie distante facultative : renseignez `BACKUP_RSYNC_DEST=utilisateur@serveur:/chemin` dans `.env` (clé SSH sans mot de passe pour `fann`). **Une sauvegarde qui reste sur le même serveur ne protège pas d'une perte du serveur.**
 - Le `.env` est inclus car, sans `BADGE_SECRET` identique, les badges déjà imprimés ne seraient plus valides après une réinstallation.
 
-### Restaurer
+### Restaurer et vérifier
+
+Ne déchiffrez pas l'archive V2 directement avec `openssl enc` : son en-tête HMAC doit être vérifié avant le déchiffrement. Utilisez le script dédié :
 
 ```bash
 export COMPOSE_FILE="compose.yaml:compose.vps.yaml"
-mkdir -p /tmp/restauration && chmod 700 /tmp/restauration
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass file:$HOME/.fann-backup.key \
-  -in sauvegardes/chiffrees/fann-AAAAMMJJ-HHMMSS.tar.enc | tar -x -C /tmp/restauration
-bash scripts/restaurer-sauvegarde.sh /tmp/restauration/base.dump test        # essai isolé
-bash scripts/restaurer-sauvegarde.sh /tmp/restauration/base.dump production  # remplace la base
+
+# Test non destructif : restaure dans une base temporaire, vérifie les tables,
+# compte les agents/services, puis supprime automatiquement la base de test.
+bash scripts/vps/restaurer-sauvegarde-chiffree.sh sauvegardes/chiffrees/fann-AAAAMMJJ-HHMMSS.tar.enc test
 ```
 
-Le mode `test` exige au moins un agent et un service dans la sauvegarde. Faites un essai de restauration **dès la première semaine** : une sauvegarde jamais restaurée n'est pas une sauvegarde prouvée.
+Le mode `test` n'arrête pas l'application et ne remplace pas la base courante. Pour une répétition complète de restauration/migration, utilisez un VPS de recette isolé avec ses propres volumes et son propre `.env`, puis lancez le mode `production` **uniquement sur ce clone** :
+
+```bash
+bash scripts/vps/restaurer-sauvegarde-chiffree.sh /chemin-prive/fann-AAAAMMJJ-HHMMSS.tar.enc production
+```
+
+Ce mode demande de taper `RESTAURER`, arrête l'application sélectionnée par Compose, restaure le dump, exécute les migrations puis redémarre l'application. Il remplace la base sélectionnée : ne le lancez sur le VPS réel que pour un incident confirmé, après validation du clone et décision explicite.
+
+Le script exige la clé `~/.fann-backup.key` (ou `BACKUP_KEY_FILE`) et vérifie le HMAC V2 avant déchiffrement. Les archives historiques sans HMAC sont refusées par défaut ; `ALLOW_LEGACY_BACKUP=1` est une dérogation exceptionnelle qui ne garantit pas l'intégrité cryptographique.
+
+Le mode `test` exige au moins un agent et un service dans la sauvegarde. Faites un essai de restauration **dès la première semaine**, puis régulièrement : une sauvegarde jamais restaurée n'est pas une sauvegarde prouvée.
 
 ## Mise à jour vers une nouvelle version
 

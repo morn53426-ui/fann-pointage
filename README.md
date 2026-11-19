@@ -1,6 +1,6 @@
 # FANN POINTAGE
 
-**Version 0.2.0-preproduction.44 — correctifs de l'audit v31 (voir `CORRECTIFS-V32-2026-10-28.md`) : affiches QR permanentes bloquées pour une adresse non sûre (http, localhost, tunnel, IP non routable) ; mot de passe provisoire aléatoire par défaut et démarrage refusé en production avec le mode « téléphone » (`FANN_ENV=production`) ; désactivation/réactivation d'une zone (révocation d'affiche) avec motif et audit ; création de zone atomique avec son audit ; documentation réalignée (anciens rapports dans `docs/historique/`). Préproduction : recette PostgreSQL/Docker/HTTPS/téléphones obligatoire avant tout usage réel.**
+**Version 0.2.0-preproduction.47 — branche de correction `fix/p0-backup-restore-security`.** Cette révision comprend les corrections de sécurité/sauvegarde, les ajustements des badges et du responsive mobile, ainsi que la migration `0027_indexes_performance_operational`. Les contrôles GitHub Actions de la révision `04546766` sont réussis ; la version reste toutefois en préproduction jusqu'à la recette sur un clone de la base, les essais sur appareils réels et la validation métier. La PR #1 est encore en brouillon.
 
 ## Périmètre fonctionnel de cette livraison
 
@@ -8,15 +8,15 @@ Le mode `postgres-catalogue` utilise PostgreSQL pour le registre des agents et s
 
 Le tableau de bord dispose d’indicateurs issus de PostgreSQL, d’un état de connexion explicite, d’un aperçu sur 7 jours, des compteurs par régime et d’une présentation adaptative desktop/mobile. La création, l’émission, le renouvellement et la révocation des badges ainsi que la modification des données agents sont réservés à l’administrateur côté serveur. Révoquer un badge ne désactive pas l’agent ; les pointages historiques ne sont pas supprimés.
 
-Le registre d’origine représente **54 références d’agents et 20 services** proviennent des éléments fournis pour l’import initial ; le fichier nominatif est conservé hors du dépôt. Les matricules absents de la liste restent vides ; les régimes importés doivent être confirmés par l’administration avant la création des plannings.
+Les éléments de référence fournis pour l'import initial représentent **54 fiches agents et 20 services**. Le fichier nominatif SQL reste hors du dépôt et n'est jamais intégré à l'image Docker ni appliqué par les migrations ordinaires. Son import, s'il est autorisé, nécessite la prévisualisation et l'approbation décrites dans `docs/IMPORT_REGISTRE.md`. Les matricules absents de la liste restent vides ; les régimes importés doivent être confirmés par l’administration avant la création des plannings.
 
 ## Limites restantes — préproduction uniquement
 
 Les absences/justifications et rapports détaillés sont maintenant raccordés à la couche PostgreSQL dans le code livré. La migration `0015_absences_rapports_postgres` ajoute les métadonnées nécessaires au registre (service historique, auteur, note administrative, date et motif de décision). Cette couche a été exercée sur une véritable instance PostgreSQL 16 (base neuve et base mise à niveau) lors de la recette v18 ; les tests unitaires, eux, utilisent des clients simulés. Elle reste à rejouer sur le poste de déploiement (`docs/PREPARATION_PRODUCTION.md`). Le QR dynamique nécessite une zone de pointage configurée avec les coordonnées validées du site. Les règles de calendrier, les régimes individuels et les accès responsables doivent être validés avec l’administration du CHNU Fann.
 
-**Vérifications de cette livraison :** la suite automatisée exécutée avec Node a réussi (**381 tests, 0 échec**) ; `node --check web/app.js` et `node --check scripts/migrate-catalogue.mjs` passent. `npm ci` n’a pas abouti dans cet environnement : le contrôle TypeScript avec les dépendances officielles n’est donc pas déclaré validé. Les essais PostgreSQL réels, Docker complet et les tests sur téléphones/navigateurs doivent être rejoués avec les migrations `0021` et `0022` sur un environnement de recette avant production. Voir `docs/PREPARATION_PRODUCTION.md`.
+**Vérifications de la révision 0.2.0-preproduction.47 :** GitHub Actions a réussi l'installation des dépendances, l'audit des dépendances de production, le contrôle de livraison, TypeScript, les tests Node, les tests de chiffrement/intégrité des sauvegardes, les tests sur PostgreSQL jetable et Playwright sur Chromium. Voir l'exécution [CI réussie](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343). Ces contrôles automatisés ne remplacent pas la recette sur un clone du VPS/de la base, ni les essais HTTPS, caméra, GPS et impression sur les appareils réels. Voir `docs/PREPARATION_PRODUCTION.md`.
 
-**Toujours non vérifié pour cette livraison et obligatoire avant la production :** application complète sur Docker, migrations `0021` et `0022` sur un vrai PostgreSQL, restauration complète, navigateurs mobile/desktop, caméra et géolocalisation en HTTPS, impression réelle et pilote contrôlé. Cette version reste en préproduction.
+**Toujours obligatoire avant la production :** restaurer une archive chiffrée authentifiée sur un clone isolé, mettre ce clone à niveau jusqu'à `0027`, refaire les scénarios métier, puis tester les appareils, la caméra, le GPS, le HTTPS, l'impression et un pilote contrôlé. Le dépôt `main` n'est pas mis à jour par cette branche de correction.
 
 ## Démarrage — Windows / Git Bash
 
@@ -83,7 +83,7 @@ Avant l’émission des badges, les responsables doivent confirmer les identité
 - L’archivage ne supprime pas les affectations et pointages historiques.
 - Le géorepérage n’est actif que si `ZONE_LAT` et `ZONE_LNG` sont tous deux renseignés ; validez le point de référence et le rayon sur site.
 - La connexion runtime `fann_app` n'est pas superutilisateur, n'a pas de droits DDL, ne contourne pas globalement la RLS et reçoit des politiques explicites sur les tables du catalogue/authentification actuellement activés.
-- `/healthz` vérifie la vie du processus ; `/readyz` vérifie PostgreSQL, les colonnes opérationnelles requises et les marqueurs des migrations 0013/0014/0015/0016/0018/0019/0020/0021/0022 et la présence du régime Mobil dans l’ENUM.
+- `/healthz` vérifie la vie du processus ; `/readyz` vérifie PostgreSQL, les colonnes opérationnelles requises et les marqueurs des migrations 0013/0014/0015/0016/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027 ainsi que le régime Mobil dans l’ENUM.
 - Avant le déploiement officiel : HTTPS, sauvegardes chiffrées avec restauration testée, supervision, authentification et rôles revus, validation des migrations sur le vrai conteneur PostgreSQL, essais de concurrence, panne/reprise, revue métier des règles et essais terrain au CHNU Fann sont requis. La recette des absences/justifications, des rapports détaillés et de leurs exports sur une vraie base PostgreSQL reste obligatoire.
 
 ## Code et schéma

@@ -108,6 +108,7 @@ echo Ouvrez http://127.0.0.1:8787
  echo.
 echo Connexion : admin ; mot de passe local : ADMIN_INITIAL_MOT_DE_PASSE dans .env
 echo Le compte admin est cree automatiquement s'il est absent ; un compte existant n'est jamais modifie.
-echo Les fonctions de pointage/planning sont encore en phase de migration ; ce catalogue n'est pas le pointage complet de production.
+echo Les fonctions metier utilisent PostgreSQL. Cette version reste en PREPRODUCTION : recette sur un clone, HTTPS, GPS, camera et impression a valider avant usage officiel.
+echo Le service migrate applique les migrations jusqu'a 0027 avant le demarrage de app.
 echo.
 pause

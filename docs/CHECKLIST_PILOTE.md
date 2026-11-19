@@ -1,16 +1,21 @@
 # Check-list du pilote (1 à 2 services, 1 à 2 semaines) — à imprimer
 
+Version cible : `0.2.0-preproduction.47` — utilisez une révision validée de la branche de correction, avec une CI entièrement verte. Cette check-list ne vaut pas autorisation de déploiement : le CHNU Fann doit approuver le pilote.
+
 Service pilote : ____________________  Responsable : ____________________  Début : ___ / ___ / 2026
 
 ## A. Avant de commencer (IT)
-- [ ] `docker compose ps` : `app` et `db` en `healthy` ; `curl http://127.0.0.1:PORT/readyz` → `ready`
-- [ ] `npm run env:reparer -- --separer-badge` exécuté (avant tout vrai badge), puis `docker compose up -d app`
-- [ ] HTTPS actif, certificat installé sur les téléphones et postes du pilote
-- [ ] Zone de pointage renseignée (ZONE_LAT / ZONE_LNG / ZONE_RAYON) et testée sur place
-- [ ] Sauvegarde exécutée à la main avec succès **sur les deux destinations**, restauration de test réussie
-- [ ] `backup.key` copiée sur une clé USB gardée en lieu sûr
-- [ ] Supervision installée (`FANN-Surveillance`) et alerte testée
-- [ ] Mot de passe administrateur fort, compte de secours créé
+- [ ] Version de préproduction et révision Git vérifiées ; CI complète verte pour la révision déployée.
+- [ ] Une archive récente a été restaurée sur un clone isolé ; le clone a migré jusqu'à `0027`, puis un deuxième passage confirme l'idempotence.
+- [ ] `docker compose ps -a` : `db` et `app` sains ; le service ponctuel `migrate` termine avec le code 0 ; `/readyz` répond 200.
+- [ ] `fann_app` est le rôle runtime ; vérifier qu'il ne peut ni exécuter du DDL ni supprimer les journaux d'audit.
+- [ ] `npm run env:reparer -- --separer-badge` exécuté uniquement si la configuration l'exige et avant l'émission des vrais badges ; préserver le `BADGE_SECRET` déjà utilisé pour les badges actifs.
+- [ ] HTTPS actif, certificat installé et reconnu sur les téléphones et postes du pilote.
+- [ ] Zone de pointage renseignée (`ZONE_LAT` / `ZONE_LNG` / `ZONE_RAYON`) avec coordonnées validées, puis testée sur place.
+- [ ] Sauvegarde manuelle réussie ; copie distante vérifiée. Pour les scripts Linux/VPS, l'archive V2 doit passer le contrôle HMAC et le test de restauration ; pour Windows, suivre séparément `docs/SAUVEGARDE_SERVEUR.md`.
+- [ ] Clé de déchiffrement copiée hors du serveur et conservée séparément des archives (Linux/VPS : `~/.fann-backup.key` ; Windows : fichier `backup.key` documenté).
+- [ ] Supervision installée et alerte d'échec de sauvegarde testée.
+- [ ] Mot de passe administrateur fort, comptes de secours identifiés et accès contrôlés.
 
 ## B. Données
 - [ ] Les agents du service pilote ont le bon service et le bon régime (garde, urgences, général)
