@@ -1,5 +1,7 @@
 # Check-list du pilote (1 à 2 services, 1 à 2 semaines) — à imprimer
 
+Version cible : `0.2.0-preproduction.47` — utilisez une révision validée de la branche de correction, avec une CI entièrement verte. Cette check-list ne vaut pas autorisation de déploiement : le CHNU Fann doit approuver le pilote.
+
 Service pilote : ____________________  Responsable : ____________________  Début : ___ / ___ / 2026
 
 ## A. Avant de commencer (IT)
