@@ -38,7 +38,7 @@ function lancerPsql(args, options = {}) {
 // Vérifie la base elle-même (pg_isready peut annoncer que le serveur écoute même
 // si le nom de base demandé n'existe pas). Sur certaines installations Windows,
 // l'entrypoint a déjà initialisé le cluster sans créer le nom attendu par le test.
-// Le repli ne touche qu'au conteneur et au volume jetables de ce banc.
+// Le repli ne touche qu'au conteneur jetable, dont PGDATA est monté en tmpfs.
 function garantirBaseTest() {
   const sonder = () => run(['exec', '-T', db, 'psql', '-U', 'fann_test', '-d', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1', '-c', "SELECT 1 FROM pg_database WHERE datname = 'fann_pointage_test'"], { capture: true });
   // Machine lente : l'initialisation de l'entrypoint peut encore tourner. On laisse jusqu'à 60 s avant d'initialiser nous-mêmes.
@@ -126,7 +126,7 @@ async function main() {
       const cleanup = spawnSync('docker', [...compose, 'down', '--remove-orphans'], {
         cwd: root, encoding: 'utf8', windowsHide: true, stdio: 'inherit', timeout: 120_000,
       });
-      if (cleanup.status !== 0) console.error('ATTENTION : vérifiez les conteneurs/volumes de test Docker et supprimez-les si nécessaire.');
+      if (cleanup.status !== 0) console.error('ATTENTION : vérifiez uniquement les conteneurs de test restants ; ne supprimez aucun volume PostgreSQL.');
     }
   }
 }
