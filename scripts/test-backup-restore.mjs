@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { chmod, mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
+import { accessSync, constants } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,18 +39,15 @@ function findExecutable(name) {
     : [''];
   for (const directory of (process.env.PATH || '').split(delimiter)) {
     for (const extension of extensions) {
-      const candidate = join(directory, name + extension.toLowerCase());
+      const candidate = join(directory, name + extension);
       try {
-        const check = spawnSync(process.platform === 'win32' ? 'cmd' : 'test',
-          process.platform === 'win32' ? ['/c', 'if', 'exist', candidate, 'exit', '/b', '0'] : ['-x', candidate],
-          { stdio: 'ignore' });
-        if (check.status === 0) return candidate;
+        accessSync(candidate, process.platform === 'win32' ? constants.F_OK : constants.X_OK);
+        return candidate;
       } catch { /* try the next PATH entry */ }
     }
   }
   return null;
 }
-
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd || root,
@@ -159,7 +157,7 @@ async function main() {
   ]);
 
   console.log('[4/8] Restauration complète via le script officiel (HMAC avant déchiffrement).');
-  await import('node:fs/promises').then(({ mkdir: makeDir }) => makeDir(fakeBin, { mode: 0o700 }));
+  await mkdir(fakeBin, { mode: 0o700 });
   const wrapper = [
     '#!/usr/bin/env bash',
     'set -euo pipefail',
@@ -202,7 +200,6 @@ async function main() {
     maxBuffer: 128 * 1024 * 1024,
   }).stdout;
   assert.deepEqual(extractedDump, dump, 'Le dump extrait ne correspond pas au dump sauvegardé.');
-  
   docker(['exec', container, 'createdb', '-U', sourceUser, restoreDatabase]);
   const restoredClone = docker([
     'exec', '-i', container, 'pg_restore', '-U', sourceUser, '-d', restoreDatabase,
