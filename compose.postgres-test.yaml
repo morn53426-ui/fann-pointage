@@ -1,5 +1,5 @@
 # Environnement PostgreSQL JETABLE pour valider les migrations, contraintes et le redémarrage.
-# Aucun port n'est publié sur l'hôte ; le volume est supprimé par scripts/test-postgres.mjs.
+# Aucun port n'est publié sur l'hôte ; stockage PostgreSQL temporaire en tmpfs, sans volume Docker.
 name: fann-pointage-postgres-test
 
 services:
@@ -8,6 +8,10 @@ services:
       context: .
       dockerfile: Dockerfile.postgres
     image: fann-pointage-postgres-test:local
+    # PID 1 reste un superviseur shell ; le serveur PostgreSQL est enfant et peut redémarrer
+    # sans faire disparaître le conteneur ni son tmpfs éphémère.
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["docker-entrypoint.sh postgres & wait $!; sleep infinity"]
     environment:
       POSTGRES_DB: fann_pointage_test
       POSTGRES_USER: fann_test
@@ -16,8 +20,9 @@ services:
       POSTGRES_APP_USER: fann_app
       POSTGRES_APP_PASSWORD: fann_test_app_secret_url_safe_012345678901234567890123
       PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
+    # Données éphémères en mémoire : aucun volume PostgreSQL persistant n'est créé.
+    tmpfs:
+      - /var/lib/postgresql/data:rw,nosuid,size=512m
     shm_size: 128mb
     security_opt:
       - no-new-privileges:true
@@ -30,5 +35,3 @@ services:
       retries: 100
       start_period: 20s
 
-volumes:
-  postgres_test_data:

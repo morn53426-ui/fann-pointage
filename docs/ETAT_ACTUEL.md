@@ -5,11 +5,12 @@ Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
 
 ## État de livraison
 
-- Branche de travail : `fix/p0-backup-restore-security`
-- Révision contrôlée : `04546766b5c434c812a15779bf2736cf07dab59e`
-- Pull Request : [#1 — sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), encore en brouillon.
-- Branche `main` : non modifiée par cette série de corrections.
-- Statut : **préproduction**. La CI est verte, mais la recette sur un clone du VPS/de la base réelle et les validations sur site restent obligatoires avant toute mise en production.
+- Branche de consolidation : `integration/preproduction-hardening`
+- Base actuelle de `main` : `bafb11c7ac403eebbc00c5465eef4b509af812ca` (fusion de la PR #1, le 19 novembre 2026).
+- PR #1 : [sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), fusionnée dans `main` le 19 novembre 2026.
+- Les PR #2 et #4 ont été fusionnées dans la branche corrective ; la PR #3 dans sa branche de suivi. Leur consolidation vers `main` est proposée dans la [PR #5](https://github.com/morn53426-ui/fann-pointage/pull/5), ouverte en Draft.
+- `main` contient désormais les changements de la PR #1. Les changements des PR #2, #3 et #4 attendent encore la revue de la consolidation vers `main`.
+- Statut : **préproduction**. Le run #142 est entièrement vert sur la tête vérifiée de la PR #5 : restauration chiffrée PostgreSQL `tmpfs`, migrations, privilèges runtime et 55/55 tests Playwright. La recette sur un clone VPS/base réelle et les validations sur site restent obligatoires avant toute mise en production.
 
 ## Fonctions présentes
 
@@ -33,9 +34,9 @@ Migrations opérationnelles les plus récentes :
 
 Le service Compose `migrate` lance `scripts/migrate-catalogue.mjs`, puis configure les droits du rôle runtime avant le démarrage de l'application. Sur une base existante, ne supprimez jamais le volume pour forcer les migrations. Consultez `docs/DOCKER.md`.
 
-## Vérifications GitHub Actions — révision 04546766
+## Vérifications GitHub Actions — branches de correction et de consolidation
 
-Les contrôles suivants sont réussis sur cette révision :
+Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 - installation des dépendances et audit des dépendances de production ;
 - vérification de l'absence de fichiers privés et de secrets livrables ;
 - TypeScript et suite de tests Node ;
@@ -43,7 +44,9 @@ Les contrôles suivants sont réussis sur cette révision :
 - intégration sur un PostgreSQL jetable (migrations, QR, concurrence) ;
 - tests de bout en bout Playwright sur Chromium.
 
-Lien : [exécution CI réussie](https://github.com/morn53426-ui/fann-pointage/actions/runs/44607027343).
+Lien : [exécution CI #79 réussie — PR #1](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851).
+
+La validation combinée finale est réussie : [run #142](https://github.com/morn53426-ui/fann-pointage/actions/runs/44642779373), avec restauration chiffrée sur PostgreSQL `tmpfs`, migrations `0027` idempotentes, privilèges `fann_app` et 55/55 tests Playwright réussis (écrans métier, formulaire de création et fenêtre d'édition à sept largeurs). Les corrections sont proposées dans la [PR #5](https://github.com/morn53426-ui/fann-pointage/pull/5), toujours en brouillon vers `main`.
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 

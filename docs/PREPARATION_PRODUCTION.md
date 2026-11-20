@@ -4,7 +4,7 @@ Mise à jour : 19 novembre 2026
 Version source : `0.2.0-preproduction.47`  
 Révision de référence contrôlée : `600dfcb19217211747d656f326a0cdec6432d6f5` sur `fix/p0-backup-restore-security`.
 
-**Statut : préproduction.** Les contrôles automatisés GitHub Actions sont verts sur cette révision. La sortie de préproduction exige encore une répétition de restauration/migration sur un clone isolé, les tests matériels sur site et la validation métier par le CHNU Fann. La PR #1 reste en brouillon ; aucune mise à jour de `main` ni aucun déploiement VPS n'est déclaré.
+**Statut : préproduction.** La PR #1 (socle sécurité/sauvegarde) a été fusionnée dans `main`. Les corrections complémentaires des PR #2 à #4 sont regroupées sur `integration/preproduction-hardening` ; la CI combinée et la revue de cette branche restent à terminer avant une nouvelle fusion. Les runs #79, #91 et #97 sont des preuves séparées, pas une CI unique de la consolidation. La sortie de préproduction exige encore une restauration/migration sur un clone VPS isolé, les tests HTTPS/caméra/GPS/impression sur site et la validation métier du CHNU Fann. Aucun déploiement VPS n'est déclaré.
 
 ## 1. Contrôles automatisés réussis
 
@@ -166,3 +166,26 @@ Pour les sauvegardes Windows/PowerShell, suivez séparément `docs/SAUVEGARDE_SE
 - Ne publiez pas directement le port applicatif ; gardez l'accès public derrière Caddy/HTTPS.
 - Les secrets de base, `SESSION_SECRET` et `BADGE_SECRET` doivent rester séparés, forts et hors du dépôt.
 - Le statut CI vert ne remplace jamais la recette restaurée sur une copie représentative et la validation des appareils réels.
+## 8. Mesure de performance sur clone (obligatoire avant ouverture)
+
+Effectuez cette mesure uniquement après la restauration persistante sur le clone isolé et après validation de la fonctionnalité. Ne lancez aucune charge sur la base de production.
+
+Consignez dans le rapport de recette :
+- caractéristiques du VPS de recette (vCPU, RAM, type/taille du disque), version Docker/Compose, Node.js et PostgreSQL ;
+- nombre d'agents/services fictifs ou anonymisés, volume de plannings/pointages et période couverte ;
+- scénario de charge reproduisant les pointages réellement attendus (arrivées groupées, doubles soumissions, scans QR, consultations de planning/rapports) ;
+- durée de chauffe, durée de mesure et concurrence réellement utilisée ;
+- latences p50/p95/p99, taux de réponses HTTP en erreur, erreurs PostgreSQL, nombre de connexions/pools et consommation CPU/RAM ;
+- comportement pendant et après un redémarrage contrôlé de l'application et de PostgreSQL, avec vérification de /readyz et de l'absence de perte des écritures confirmées.
+
+Répétez au moins une fois avec une charge supérieure au pic attendu, définie avec l'établissement. Conservez les résultats bruts expurgés, la révision Git et les commandes exactes. N'annoncez aucune capacité en nombre d'agents tant que le test représentatif n'a pas été réalisé.
+
+## 9. Contrôles GitHub avant fusion dans `main`
+
+La CI est une preuve technique, pas une revue de code. Avant de fusionner la PR de consolidation :
+- vérifier que la protection de branche de `main` impose une pull request et interdit les poussées directes/force-push ;
+- rendre obligatoire le statut GitHub Actions du job `verification` de la workflow **FANN POINTAGE CI** ;
+- exiger que la branche soit à jour avec `main` avant fusion ;
+- faire relire les changements de sécurité, restauration et droits PostgreSQL par une personne habilitée, puis obtenir l'approbation métier du responsable du pilote.
+
+L'état actuel des règles de protection de `main` n'a pas été vérifié via l'API utilisée pendant cette intervention. Consignez une capture ou un export des règles avant la fusion ; ne présumez pas qu'elles sont actives.

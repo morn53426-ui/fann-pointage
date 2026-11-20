@@ -125,15 +125,18 @@ test("banc PostgreSQL : environnement jetable, concurrence QR et reprise", () =>
   const runner = readFileSync(new URL("../../scripts/test-postgres.mjs", import.meta.url), "utf8");
   const packageJson = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { scripts?: Record<string, string> };
   assert.match(composeTest, /fann_pointage_test/);
-  assert.doesNotMatch(composeTest, /^\s+ports:/m, "la base de test ne doit exposer aucun port");
-  assert.match(composeTest, /postgres_test_data/);
+  assert.doesNotMatch(composeTest, /^\s+volumes:/m, "le banc PostgreSQL ne doit créer aucun volume persistant");
+  assert.match(composeTest, /tmpfs:[\s\S]*\/var\/lib\/postgresql\/data/);
+  assert.doesNotMatch(composeTest, /postgres_test_data/);
   assert.match(runner, /001_contraintes\.sql/);
   assert.match(runner, /garantirBaseTest/);
   assert.match(runner, /CREATE DATABASE fann_pointage_test/);
   assert.match(runner, /Promise\.all/);
   assert.match(runner, /qr_token_uses/);
   assert.match(runner, /FANN-POSTGRES-RESTART-OK/);
-  assert.match(runner, /down', '--volumes', '--remove-orphans/);
+  assert.match(runner, /pg_ctl/);
+  assert.match(runner, /down', '--remove-orphans/);
+  assert.doesNotMatch(runner, /down', '--volumes/, "le nettoyage ne doit jamais supprimer de volume PostgreSQL");
   assert.equal(packageJson.scripts?.["test:postgres"], "node scripts/test-postgres.mjs");
 });
 

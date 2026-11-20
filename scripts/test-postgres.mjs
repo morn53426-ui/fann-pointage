@@ -38,7 +38,7 @@ function lancerPsql(args, options = {}) {
 // Vérifie la base elle-même (pg_isready peut annoncer que le serveur écoute même
 // si le nom de base demandé n'existe pas). Sur certaines installations Windows,
 // l'entrypoint a déjà initialisé le cluster sans créer le nom attendu par le test.
-// Le repli ne touche qu'au conteneur et au volume jetables de ce banc.
+// Le repli ne touche qu'au conteneur jetable, dont PGDATA est monté en tmpfs.
 function garantirBaseTest() {
   const sonder = () => run(['exec', '-T', db, 'psql', '-U', 'fann_test', '-d', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1', '-c', "SELECT 1 FROM pg_database WHERE datname = 'fann_pointage_test'"], { capture: true });
   // Machine lente : l'initialisation de l'entrypoint peut encore tourner. On laisse jusqu'à 60 s avant d'initialiser nous-mêmes.
@@ -112,10 +112,10 @@ async function main() {
     const counts = lancerPsql(['-At', '-c', `SELECT (SELECT count(*) FROM pointages WHERE qr_token_id = '00000000-0000-0000-0000-0000000000e7') || ':' || (SELECT count(*) FROM qr_token_uses WHERE token_id = '00000000-0000-0000-0000-0000000000e7')`], { capture: true });
     assert.equal(counts.stdout.trim(), '1:1', `La transaction QR doit laisser exactement un pointage et un usage. Résultat : ${counts.stdout.trim()}`);
 
-    console.log('\n[3/4] Test de conservation d’une écriture après redémarrage PostgreSQL');
+    console.log('\n[3/4] Test de conservation d’une écriture après redémarrage du processus PostgreSQL (tmpfs conservé)');
     lancerPsql(['-c', `CREATE TABLE IF NOT EXISTS public.fann_test_recovery (id integer PRIMARY KEY, marker text NOT NULL); TRUNCATE public.fann_test_recovery; INSERT INTO public.fann_test_recovery (id, marker) VALUES (1, 'FANN-POSTGRES-RESTART-OK');`]);
-    run(['restart', db]);
-    run(['up', '-d', '--wait', '--wait-timeout', '120', db]);
+    // Le conteneur reste en vie : seul le serveur PostgreSQL redémarre, donc le tmpfs n'est ni démonté ni recréé.
+    run(['exec', '-u', 'postgres', '-T', db, 'pg_ctl', '-D', '/var/lib/postgresql/data/pgdata', '-m', 'fast', '-w', 'restart']);
     const reprise = lancerPsql(['-At', '-c', 'SELECT marker FROM public.fann_test_recovery WHERE id = 1'], { capture: true });
     assert.equal(reprise.stdout.trim(), 'FANN-POSTGRES-RESTART-OK', 'La base n’a pas conservé l’écriture après redémarrage.');
 
@@ -123,10 +123,10 @@ async function main() {
     console.log('La base de test est isolée ; aucune donnée réelle n’a été utilisée.');
   } finally {
     if (stackCreated) {
-      const cleanup = spawnSync('docker', [...compose, 'down', '--volumes', '--remove-orphans'], {
+      const cleanup = spawnSync('docker', [...compose, 'down', '--remove-orphans'], {
         cwd: root, encoding: 'utf8', windowsHide: true, stdio: 'inherit', timeout: 120_000,
       });
-      if (cleanup.status !== 0) console.error('ATTENTION : vérifiez les conteneurs/volumes de test Docker et supprimez-les si nécessaire.');
+      if (cleanup.status !== 0) console.error('ATTENTION : vérifiez uniquement les conteneurs de test restants ; ne supprimez aucun volume PostgreSQL.');
     }
   }
 }
