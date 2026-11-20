@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # Publie uniquement l'archive déjà chiffrée. Un échec distant doit remonter à cron/CI.
 fann_backup_copy_remote() {
-  local archive="\${1:?Archive locale requise.}"
-  local destination="\${2:-}"
+  if [[ "$#" -lt 2 ]]; then
+    echo 'Usage interne : fann_backup_copy_remote <archive-chiffree> <destination>' >&2
+    return 2
+  fi
+
+  local archive="$1"
+  local destination="$2"
   local status
 
   [[ -n "$destination" ]] || return 0
