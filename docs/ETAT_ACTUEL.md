@@ -1,16 +1,17 @@
 # État actuel du projet — point d'entrée unique FANN POINTAGE
-Mise à jour : 19 novembre 2026 · Version : `0.2.0-preproduction.47`
+Mise à jour : 20 novembre 2026 · Version applicative : `0.2.0-preproduction.47`
 
 > Ce fichier est le point d'entrée de l'état courant. Les audits et rapports de `docs/historique/` restent des instantanés historiques et ne décrivent pas nécessairement la version actuelle.
 
 ## État de livraison
 
-- Branche de consolidation : `integration/preproduction-hardening`
-- Base actuelle de `main` : `bafb11c7ac403eebbc00c5465eef4b509af812ca` (fusion de la PR #1, le 19 novembre 2026).
-- PR #1 : [sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), fusionnée dans `main` le 19 novembre 2026.
-- Les PR #2 et #4 ont été fusionnées dans la branche corrective ; la PR #3 dans sa branche de suivi. Leur consolidation vers `main` est proposée dans la [PR #5](https://github.com/morn53426-ui/fann-pointage/pull/5), ouverte en Draft.
-- `main` contient désormais les changements de la PR #1. Les changements des PR #2, #3 et #4 attendent encore la revue de la consolidation vers `main`.
-- Statut : **préproduction**. Le run #142 est entièrement vert sur la tête vérifiée de la PR #5 : restauration chiffrée PostgreSQL `tmpfs`, migrations, privilèges runtime et 55/55 tests Playwright. La recette sur un clone VPS/base réelle et les validations sur site restent obligatoires avant toute mise en production.
+- Référence stable : branche `main`, commit `354700321754da07605bb9940d1407969d8c1e45` (20 novembre 2026).
+- PR #1 : [sécuriser les sauvegardes et restaurations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/1), fusionnée le 19 novembre 2026.
+- PR #5 : [consolidation sécurité, restauration PostgreSQL et responsivité](https://github.com/morn53426-ui/fann-pointage/pull/5), fusionnée le 20 novembre 2026. Elle intègre les changements consolidés des PR #2, #3 et #4.
+- PR #6 : [propager les échecs de copie distante des sauvegardes](https://github.com/morn53426-ui/fann-pointage/pull/6), ouverte depuis `fix/p1-backup-remote-copy-status`. La CI #152 est réussie sur le SHA `998d2795eb1555d4fb592ba07a2786fa940abebc`; la revue humaine reste à obtenir.
+- Issue #7 : [alerte explicite en cas d’échec de sauvegarde planifiée](https://github.com/morn53426-ui/fann-pointage/issues/7), ouverte. Aucun canal d’alerte n’est encore configuré.
+- Protection GitHub de `main` : **désactivée** au contrôle du 20 novembre 2026 ; aucun ruleset de dépôt n’est présent. La protection doit être activée avant toute nouvelle fusion sensible.
+- Statut : **préproduction**. La CI vérifie les changements logiciels, mais la restauration sur un clone VPS isolé, la recette métier, HTTPS/DNS, la caméra, le géorepérage, l’impression réelle et l’approbation du CHNU Fann restent obligatoires avant toute mise en production.
 
 ## Fonctions présentes
 
@@ -46,7 +47,7 @@ Sur la tête de la PR #1 `f9b76e22`, les contrôles suivants sont réussis :
 
 Lien : [exécution CI #79 réussie — PR #1](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851).
 
-La validation combinée finale est réussie : [run #142](https://github.com/morn53426-ui/fann-pointage/actions/runs/44642779373), avec restauration chiffrée sur PostgreSQL `tmpfs`, migrations `0027` idempotentes, privilèges `fann_app` et 55/55 tests Playwright réussis (écrans métier, formulaire de création et fenêtre d'édition à sept largeurs). Les corrections sont proposées dans la [PR #5](https://github.com/morn53426-ui/fann-pointage/pull/5), toujours en brouillon vers `main`.
+La consolidation [PR #5](https://github.com/morn53426-ui/fann-pointage/pull/5) a été fusionnée dans `main` le 20 novembre 2026. La validation finale de cette consolidation avait réussi sur sa tête de PR : restauration chiffrée PostgreSQL `tmpfs`, migrations `0027` idempotentes, privilèges `fann_app` et 55/55 tests Playwright. La correction suivante, [PR #6](https://github.com/morn53426-ui/fann-pointage/pull/6), est ouverte ; sa CI #152 est verte sur son SHA exact. Elle attend encore une revue humaine avant fusion.
 
 Cette validation automatisée ne signifie pas que le VPS, une base de production, les téléphones de l'hôpital ou les imprimantes réelles ont été testés.
 
