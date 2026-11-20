@@ -14,13 +14,13 @@ Les seuls statuts autorisés sont : **À faire**, **En cours**, **Bloqué**, **C
 | Phase | Statut | Priorité | Preuve / situation vérifiable |
 |---|---|---:|---|
 | 0 — Audit initial | En cours | P1 | Références GitHub vérifiées : `main` = `bafb11c7` (PR #1 fusionnée). Les PR #2 et #4 ont été fusionnées dans la branche corrective ; la PR #3 dans sa branche de suivi. La consolidation est maintenant portée par la PR #5, ouverte en Draft. L'audit courant est ciblé ; l'inventaire exhaustif du code, des routes, des règles métier et des dépendances reste à compléter. |
-| 1 — Rétablissement de la CI | En cours | P1 | Run #79 sur la tête de la PR #1 : CI standard verte. Run #91 sur la branche de suivi PR #3 : restauration intégrale chiffrée sur PostgreSQL `tmpfs`, migrations 0027 idempotentes et privilèges `fann_app` vérifiés. Run #97 sur la branche PR #4 : matrice responsive élargie et Playwright verts. [Run #79](https://github.com/morn53426-ui/fann-pointage/actions/runs/44620631851) · [Run #91](https://github.com/morn53426-ui/fann-pointage/actions/runs/44621955504) · [Run #97](https://github.com/morn53426-ui/fann-pointage/actions/runs/44623136749). La consolidation vers `main` est testée par le run #122, actuellement en cours. |
-| 2 — Responsive mobile / tablette / desktop | En cours | P1 | Les scénarios d'en-tête, des écrans principaux et des badges couvrent 320, 360, 390, 430, 768, 1024 et 1440 px ; run #97 réussi. Les formulaires, tableaux, fenêtres modales et tous les parcours métiers ne sont pas encore couverts à ces dimensions. |
-| 3 — Badges et impression | En cours | P1 | Les tests Playwright du run #97 et du run #91 sont verts, incluant le format CR80, QR, aperçu, recto-verso, PDF A4 et les tailles responsive ciblées. Aucune impression sur imprimante physique n'a été réalisée. [Run #97](https://github.com/morn53426-ui/fann-pointage/actions/runs/44623136749). |
-| 4 — Sécurité et sauvegardes | En cours | P1 | Les corrections #2 empêchent la suppression d'une base préexistante en cas de collision ; les tests nominaux et collision simulée sont inclus. La recette #3 vérifie le HMAC avant déchiffrement et la restauration via le script officiel dans PostgreSQL `tmpfs`. Aucun VPS, secret réel ni backup de production n'a été utilisé. |
-| 5 — PostgreSQL et règles métier | En cours | P1 | Run #91 : banc PostgreSQL jetable réussi ; archive restaurée, 20 services et un agent fictif contrôlés ; migrations jusqu'à `0027_indexes_performance_operational` et second passage idempotent ; privilèges du rôle `fann_app` vérifiés. Une restauration d'un clone VPS isolé et la validation métier CHNU Fann restent nécessaires. |
+| 1 — Rétablissement de la CI | Validé en CI | P1 | Run #130 sur `integration/preproduction-hardening` : installation, audit, contrôle livraison, TypeScript, tests Node, chiffrement, PostgreSQL jetable, restauration chiffrée intégrale `tmpfs` et Playwright tous réussis. La suite Playwright élargie a passé 55/55 tests. [Run #130](https://github.com/morn53426-ui/fann-pointage/actions/runs/44641989788). Un run #136 vérifie encore le commit de documentation le plus récent ; aucun résultat final de ce run n'est présumé. |
+| 2 — Responsive mobile / tablette / desktop | Validé en CI | P1 | Run #130 : 55/55 tests Playwright réussis. Les scénarios testent en-tête et vues tableau de bord, anomalies, absences, rapports, planning, badges, émargement et historique à 320, 360, 390, 430, 768, 1024 et 1440 px ; formulaires de création et fenêtre d'édition des badges comprises. Les appareils physiques et les autres parcours non couverts restent à vérifier sur site. |
+| 3 — Badges et impression | Validé en CI | P1 | Run #130 : tests Playwright du format CR80, QR, aperçu, édition, recto-verso, PDF A4, texte minimum et responsive réussis. Aucune impression sur imprimante physique ni lecture avec les scanners réels n'a été réalisée. |
+| 4 — Sécurité et sauvegardes | Validé en CI | P1 | Les corrections #2 empêchent la suppression d'une base préexistante en cas de collision ; les tests nominaux et collision simulée sont inclus. La recette #3 vérifie le HMAC avant déchiffrement et la restauration via le script officiel dans PostgreSQL `tmpfs`. Aucun VPS, secret réel ni backup de production n'a été utilisé. |
+| 5 — PostgreSQL et règles métier | Validé en CI | P1 | Run #130 : banc PostgreSQL jetable et restauration chiffrée E2E réussis ; agent fictif et 20 services contrôlés ; migrations jusqu'à `0027_indexes_performance_operational` puis second passage idempotent ; privilèges `fann_app` vérifiés. Une restauration d'un clone VPS isolé et la validation métier CHNU Fann restent nécessaires. |
 | 6 — Non-régression et performance | En cours | P2 | Les tests unitaires, PostgreSQL et Playwright sont verts sur les commits indiqués. Aucun test de charge représentatif ni mesure de latence/consommation CPU/RAM sur un VPS de recette n'est encore documenté. |
-| 7 — Documentation et tableau qualité | En cours | P2 | Le tableau qualité et `docs/ETAT_ACTUEL.md` sont mis à jour sur la branche de consolidation ; les autres guides de préproduction doivent encore être passés en revue pour retirer les références aux PR fermées et refléter la version consolidée. |
+| 7 — Documentation et tableau qualité | Validé | P2 | `docs/PLAN_AUTOMATISATION_QUALITE.md`, `docs/ETAT_ACTUEL.md`, `README.md`, `DEMARRER-ICI-WINDOWS.md`, `docs/PREPARATION_PRODUCTION.md`, `docs/CHECKLIST_PILOTE.md` et `docs/DOCKER.md` ont été alignés sur la fusion de PR #1 et la PR #5 de consolidation. |
 | 8 — Préproduction et livraison | Bloqué | P1 | En attente d'une restauration récente sur un clone VPS isolé, HTTPS/DNS/Caddy, tests GPS et caméra sur appareils réels, impression physique, validation des responsables CHNU Fann et revue des PR. Aucun déploiement ni merge n'est autorisé par ce plan. |
 
 ## État GitHub et dépendances entre PR
@@ -30,7 +30,7 @@ Les seuls statuts autorisés sont : **À faire**, **En cours**, **Bloqué**, **C
 - PR #2 : [Empêcher la suppression d'une base préexistante](https://github.com/morn53426-ui/fann-pointage/pull/2), fusionnée dans `fix/p0-backup-restore-security`, pas directement dans `main`.
 - PR #3 : [Restauration chiffrée intégrale et migrations PostgreSQL](https://github.com/morn53426-ui/fann-pointage/pull/3), fusionnée dans `fix/p1-restore-test-db-safety`; ses changements sont maintenant repris dans la PR #5.
 - PR #4 : [Étendre la recette responsive et ajouter le tableau qualité](https://github.com/morn53426-ui/fann-pointage/pull/4), fusionnée dans `fix/p0-backup-restore-security`; ses changements sont maintenant repris dans la PR #5.
-- PR #5 : [Consolider sécurité, restauration PostgreSQL et responsivité](https://github.com/morn53426-ui/fann-pointage/pull/5), ouverte en Draft vers `main`. Son run combiné #122 est en cours.
+- PR #5 : [Consolider sécurité, restauration PostgreSQL et responsivité](https://github.com/morn53426-ui/fann-pointage/pull/5), ouverte en Draft vers `main`. Le run combiné #130 a réussi sur le commit `385773ba` (55 tests Playwright). Le run #136 revalide les dernières mises à jour documentaires.
 
 ## Règles de preuve
 
@@ -43,16 +43,17 @@ Les seuls statuts autorisés sont : **À faire**, **En cours**, **Bloqué**, **C
 
 ## Prochaines actions
 
-1. Vérifier le résultat complet du run #122 sur la PR #5 et corriger les éventuelles régressions combinées.
-2. Compléter la matrice responsive des formulaires, tableaux et modales.
-3. Faire relire la PR #5 ; ne la fusionner qu'après approbation humaine et CI verte.
-4. Restaurer une sauvegarde récente sur un clone VPS isolé, avec données anonymisées/fictives, puis contrôler `/readyz`.
-5. Mesurer les performances sur une infrastructure de recette représentative.
-6. Obtenir les validations terrain CHNU Fann avant toute mise en production.
+1. Vérifier la réussite du run #136 sur le commit documentaire actuel de la PR #5.
+2. Obtenir une revue humaine et la configuration des protections obligatoires de `main` avant de fusionner la PR #5.
+3. Restaurer une sauvegarde récente sur un clone VPS isolé, avec données anonymisées/fictives, puis contrôler `/readyz`.
+4. Exécuter le test de charge sur l'infrastructure de recette et consigner p50/p95/p99, erreurs, CPU/RAM et connexions PostgreSQL.
+5. Réaliser les tests caméra/GPS/HTTPS, l'impression et le pilote avec les responsables CHNU Fann.
+6. N'autoriser la production qu'après validation écrite de ces contrôles.
 
 ## Historique des preuves récentes
 
 - PR #1, run #79, commit `f9b76e22` : CI standard verte.
 - PR #3, run #91, commit `e3b506af` : CI complète verte, y compris le test de restauration chiffrée intégrale sur PostgreSQL `tmpfs`, migrations 0027 idempotentes, privilèges runtime et 40 tests Playwright.
 - PR #2 : correction de collision de base temporaire fusionnée dans sa branche cible ; sera revalidée dans la CI de consolidation.
-- PR #4, run #97 : CI verte pour la matrice responsive étendue et les autres contrôles du dépôt.
+- PR #4, run #97 : CI verte pour la matrice responsive initiale étendue.
+- PR #5, run #130, commit `385773ba` : CI combinée verte ; 55 tests Playwright réussis, dont formulaires/éditeur de badge et sept largeurs. [Run #130](https://github.com/morn53426-ui/fann-pointage/actions/runs/44641989788).
