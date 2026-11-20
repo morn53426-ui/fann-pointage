@@ -63,6 +63,7 @@ chmod 600 "$cle"
 (( $(wc -c < "$cle") >= 32 )) || { echo 'La clé de sauvegarde est trop courte.' >&2; exit 2; }
 
 source scripts/vps/backup-crypto.sh
+source scripts/vps/backup-remote-copy.sh
 mkdir -m 700 "$tmp/clair" "$tmp/contenu" "$tmp/extrait"
 # Le dump est produit dans l'espace temporaire privé. Il est supprimé même si le chiffrement échoue.
 bash scripts/sauvegarde-postgres.sh "$tmp/clair" 1 >/dev/null
@@ -112,10 +113,6 @@ done
 # Copie distante facultative : seul le fichier chiffré est transmis.
 dest="$(grep -m1 '^BACKUP_RSYNC_DEST=' .env | cut -d= -f2- || true)"
 if [[ -n "$dest" ]]; then
-  if rsync -a --partial --delay-updates --partial-dir=.rsync-partial \
-    -e 'ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new' "$archive" "$dest/"; then
-    echo "Copie chiffrée distante envoyée vers $dest"
-  else
-    echo "ATTENTION : l’envoi distant a échoué ; la copie locale vérifiée est conservée." >&2
-  fi
+  # Sous set -e, un code rsync non nul arrête le script ; l'archive locale vérifiée reste présente.
+  fann_backup_copy_remote "$archive" "$dest"
 fi
