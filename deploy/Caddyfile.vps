@@ -2,11 +2,13 @@
     email {$ACME_EMAIL}
 }
 
+# Conserver la redirection historique du domaine apex vers www.
 fannpointage.com {
     redir https://www.fannpointage.com{uri} permanent
 }
 
-www.fannpointage.com {
+# Le nom public du service est fourni par compose.vps.yaml via FANN_HOSTNAME.
+{$FANN_HOSTNAME} {
     encode zstd gzip
 
     header {
