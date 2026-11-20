@@ -1,10 +1,10 @@
 # Préparation à la production — FANN POINTAGE
 
-Mise à jour : 19 novembre 2026  
-Version source : `0.2.0-preproduction.47`  
-Révision de référence contrôlée : `600dfcb19217211747d656f326a0cdec6432d6f5` sur `fix/p0-backup-restore-security`.
+Mise à jour : 20 novembre 2026  
+Version applicative : `0.2.0-preproduction.47`  
+Révision stable : `354700321754da07605bb9940d1407969d8c1e45` sur `main`.
 
-**Statut : préproduction.** La PR #1 (socle sécurité/sauvegarde) a été fusionnée dans `main`. Les corrections complémentaires des PR #2 à #4 sont regroupées sur `integration/preproduction-hardening` ; la CI combinée et la revue de cette branche restent à terminer avant une nouvelle fusion. Les runs #79, #91 et #97 sont des preuves séparées, pas une CI unique de la consolidation. La sortie de préproduction exige encore une restauration/migration sur un clone VPS isolé, les tests HTTPS/caméra/GPS/impression sur site et la validation métier du CHNU Fann. Aucun déploiement VPS n'est déclaré.
+**Statut : préproduction.** La PR #5, qui consolide les PR #2 à #4, a été fusionnée dans `main` le 20 novembre 2026. La PR #6 (propagation des erreurs de copie distante) reste ouverte et attend une revue humaine ; sa CI #152 est réussie sur le SHA exact `998d2795eb1555d4fb592ba07a2786fa940abebc`. L'issue #7 suit l'ajout d'une alerte explicite en cas d'échec de sauvegarde planifiée. Au contrôle du 20 novembre, la protection de `main` est désactivée et aucun ruleset de dépôt n'est présent. La sortie de préproduction exige encore une restauration/migration sur un clone VPS isolé, les tests HTTPS/caméra/GPS/impression sur site et la validation métier du CHNU Fann. Aucun déploiement VPS n'est déclaré.
 
 ## 1. Contrôles automatisés réussis
 
@@ -144,7 +144,7 @@ Le script `npm run recette:api` peut compléter la recette, mais il crée des en
 - [ ] Pointage hors ligne et resynchronisation sur le réseau réel.
 - [ ] Validation des horaires, régimes, jours fériés, repos et zones par l'administration du CHNU Fann.
 - [ ] Politique d'accès, conservation des données nominatives/photos/téléphones et responsabilités validées par l'établissement.
-- [ ] Supervision, alerte d'échec des sauvegardes, copie distante et accès à la clé de déchiffrement documentés.
+- [ ] Supervision, canal d'alerte d'échec des sauvegardes testé, copie distante et accès à la clé de déchiffrement documentés (suivi : [issue #7](https://github.com/morn53426-ui/fann-pointage/issues/7)).
 - [ ] Pilote d'un seul service sur une durée convenue, avec suivi et décision formelle avant ouverture générale.
 
 ## 6. Sauvegarde et restauration
@@ -182,10 +182,13 @@ Répétez au moins une fois avec une charge supérieure au pic attendu, définie
 
 ## 9. Contrôles GitHub avant fusion dans `main`
 
-La CI est une preuve technique, pas une revue de code. Avant de fusionner la PR de consolidation :
-- vérifier que la protection de branche de `main` impose une pull request et interdit les poussées directes/force-push ;
+La CI est une preuve technique, pas une revue de code. Au contrôle du 20 novembre 2026, l'API GitHub indique que la branche `main` n'est pas protégée (`protected: false`, protection désactivée) et qu'aucun ruleset de dépôt n'est configuré. Cette configuration est un risque de gouvernance à traiter dans les paramètres GitHub avant toute fusion sensible.
+
+Avant de fusionner la PR #6 et les PR suivantes :
+- activer une règle de protection ou un ruleset sur `main` qui impose une pull request et interdit les poussées directes/force-push ;
 - rendre obligatoire le statut GitHub Actions du job `verification` de la workflow **FANN POINTAGE CI** ;
 - exiger que la branche soit à jour avec `main` avant fusion ;
-- faire relire les changements de sécurité, restauration et droits PostgreSQL par une personne habilitée, puis obtenir l'approbation métier du responsable du pilote.
+- faire relire les changements de sécurité, restauration et droits PostgreSQL par une personne habilitée ;
+- obtenir l'approbation métier du responsable du pilote avant le passage en production.
 
-L'état actuel des règles de protection de `main` n'a pas été vérifié via l'API utilisée pendant cette intervention. Consignez une capture ou un export des règles avant la fusion ; ne présumez pas qu'elles sont actives.
+La PR #6 est ouverte et sa CI #152 est réussie sur le SHA `998d2795eb1555d4fb592ba07a2786fa940abebc`, mais elle ne dispose pas encore d'une revue humaine enregistrée. La fusion n'est pas automatique. La configuration de protection doit être vérifiée après activation dans les paramètres GitHub.
