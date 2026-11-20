@@ -24,8 +24,8 @@ function validateCaddyForHostname(hostname) {
     '--env', `FANN_HOSTNAME=${hostname}`,
     '--env', `ACME_EMAIL=${email}`,
     '--mount', `type=bind,src=${caddyfile},dst=/etc/caddy/Caddyfile,readonly`,
+    '--entrypoint', '/bin/sh',
     image,
-    'sh',
     '-euc',
     [
       'caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile --pretty > /tmp/caddy-adapted.json',
