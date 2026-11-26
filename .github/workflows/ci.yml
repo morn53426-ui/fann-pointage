@@ -33,6 +33,10 @@ jobs:
           node --check web/app.js
           node --check web/sw.js
           node --check web/vendor/qrcode.js
+      - name: Précharger Caddy pour la validation VPS
+        run: docker pull caddy:2.10-alpine
+      - name: Valider Caddy avec des domaines fictifs
+        run: npm run test:deploy-config
       - name: Tests sur un vrai PostgreSQL jetable (migrations, QR, concurrence)
         run: npm run test:postgres
       - name: Restauration intégrale d’une archive chiffrée sur PostgreSQL tmpfs
